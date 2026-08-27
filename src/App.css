@@ -13,20 +13,35 @@
   animation: fade 0.7s var(--ease) both;
 }
 
+.site-header.is-scrolled {
+  background: rgba(8, 8, 10, 0.88);
+  border-bottom-color: var(--line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
 .navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 28px;
   height: 76px;
+  transition: height 0.3s var(--ease);
   max-width: var(--shell);
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
 
+.site-header.is-scrolled .navbar {
+  height: 64px;
+}
+
 .logo img {
   height: 24px;
-  transition: opacity 0.3s var(--ease);
+  transition: opacity 0.3s var(--ease), height 0.3s var(--ease);
+}
+
+.site-header.is-scrolled .logo img {
+  height: 20px;
 }
 
 .logo:hover img {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const links = ["Home", "About", "Services", "Location", "Contact Us"];
 
@@ -23,9 +23,20 @@ const MenuIcon = ({ open }) => (
 
 const Nav = () => {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Tighten the header once the page moves away from the top
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <header className="site-header">
+    <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
       <nav className="navbar">
         <a className="logo" href="#" aria-label="Home">
           <img src="/logo-mark.png" alt="Logo" />
