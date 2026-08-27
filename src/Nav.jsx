@@ -1,47 +1,68 @@
-// const Nav = () => {
-//   return (
-//     <div>
-//       <nav>
-//         <div className="logo">
-//           <img src="/a.png" alt="Logo" />
-//         </div>
-//         <ul>
-//           <li href = "#">Home</li>
-//           <li href = "#">About</li>
-//           <li href = "#">Services</li>
-//           <li href = "#">Location</li>
-//           <li href = "#">Contact Us</li>
+import { useState } from "react";
 
-//         </ul>
-//         <button>Login</button>
-//       </nav>
-//     </div>
-//   );
-// };
+const links = ["Home", "About", "Services", "Location", "Contact Us"];
 
-// export default Nav;
+const SearchIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.4-3.4" />
+  </svg>
+);
 
-
+const MenuIcon = ({ open }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" aria-hidden="true">
+    {open ? (
+      <path d="M6 6l12 12M18 6L6 18" />
+    ) : (
+      <path d="M4 8h16M4 16h16" />
+    )}
+  </svg>
+);
 
 const Nav = () => {
-  return (
-    <header>
-      <nav className="navbar">
-        <div className="logo">
-          <img src="/a.png" alt="Logo" />
-        </div>
+  const [open, setOpen] = useState(false);
 
-        <ul className="nav-links">
-          <li><a href="#">Home</a></li>
-          <li><a href="#">About</a></li>
-          <li><a href="#">Services</a></li>
-          <li><a href="#">Location</a></li>
-          <li><a href="#">Contact Us</a></li>
+  return (
+    <header className="site-header">
+      <nav className="navbar">
+        <a className="logo" href="#" aria-label="Home">
+          <img src="/logo-mark.png" alt="Logo" />
+        </a>
+
+        <ul
+          className={open ? "nav-links is-open" : "nav-links"}
+          onClick={() => setOpen(false)}
+        >
+          {links.map((label) => (
+            <li key={label}>
+              <a href="#">{label}</a>
+            </li>
+          ))}
         </ul>
 
         <div className="nav-actions">
-          <input type="text" placeholder="Search..." className="search-input" />
+          <label className="search-field">
+            <SearchIcon />
+            <input
+              type="search"
+              placeholder="Search"
+              className="search-input"
+              aria-label="Search products"
+            />
+          </label>
+
           <button className="login-btn">Login</button>
+
+          <button
+            className="menu-btn"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+          >
+            <MenuIcon open={open} />
+          </button>
         </div>
       </nav>
     </header>
