@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const links = ["Home", "About", "Services", "Location", "Contact Us"];
 
@@ -24,6 +24,7 @@ const MenuIcon = ({ open }) => (
 const Nav = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const menuBtnRef = useRef(null);
 
   // Tighten the header once the page moves away from the top
   useEffect(() => {
@@ -34,6 +35,23 @@ const Nav = () => {
 
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Escape closes the open menu and hands focus back to the toggle, so
+  // keyboard users are not left stranded inside a panel they cannot dismiss.
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+
+      setOpen(false);
+      menuBtnRef.current?.focus();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   return (
     <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
@@ -68,6 +86,7 @@ const Nav = () => {
 
           <button
             className="menu-btn"
+            ref={menuBtnRef}
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
