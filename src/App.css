@@ -93,6 +93,10 @@
   gap: 12px;
 }
 
+.search-wrap {
+  position: relative;
+}
+
 .search-field {
   display: flex;
   align-items: center;
@@ -133,6 +137,57 @@
 
 .search-field:focus-within .search-input {
   width: 172px;
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: min(320px, 78vw);
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  box-shadow: var(--shadow-lift);
+}
+
+.search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s var(--ease);
+}
+
+.search-result.is-active {
+  background: var(--glass-strong);
+}
+
+.search-result-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.search-result-meta {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.search-empty {
+  padding: 12px;
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 .login-btn {
@@ -620,7 +675,9 @@
    ============================================================ */
 
 @media (max-width: 1080px) {
-  .search-field {
+  /* Hide the wrapper, not just the field — otherwise the results panel
+     could still appear over a search box that is no longer there. */
+  .search-wrap {
     display: none;
   }
   .stage-label {

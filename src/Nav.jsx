@@ -2,6 +2,33 @@ import { useEffect, useRef, useState } from "react";
 
 const links = ["Home", "About", "Services", "Location", "Contact Us"];
 
+// The catalogue the search box looks through. Kept here alongside the nav
+// until there is a real product API to ask.
+const catalogue = [
+  { name: "Flyknit Racer — Crimson", category: "Running", price: "$189" },
+  { name: "Flyknit Racer — Onyx", category: "Running", price: "$189" },
+  { name: "Trailbreak GTX", category: "Trail", price: "$215" },
+  { name: "Court Classic Low", category: "Lifestyle", price: "$129" },
+  { name: "Court Classic High", category: "Lifestyle", price: "$139" },
+  { name: "Cloudstep Recovery Slide", category: "Recovery", price: "$65" },
+  { name: "Marathon Elite Carbon", category: "Racing", price: "$249" },
+  { name: "Studio Trainer", category: "Training", price: "$149" },
+];
+
+const MAX_RESULTS = 5;
+
+function searchCatalogue(term) {
+  const query = term.trim().toLowerCase();
+
+  if (!query) return [];
+
+  return catalogue
+    .filter(({ name, category }) =>
+      `${name} ${category}`.toLowerCase().includes(query)
+    )
+    .slice(0, MAX_RESULTS);
+}
+
 const SearchIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
        strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -24,7 +51,13 @@ const MenuIcon = ({ open }) => (
 const Nav = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [activeResult, setActiveResult] = useState(-1);
   const menuBtnRef = useRef(null);
+  const searchRef = useRef(null);
+
+  const results = searchCatalogue(query);
 
   // Tighten the header once the page moves away from the top
   useEffect(() => {
@@ -53,6 +86,73 @@ const Nav = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
+  // A results panel that stays open after the pointer has moved on reads as
+  // a stuck overlay, so a click anywhere else dismisses it.
+  useEffect(() => {
+    if (!searchOpen) return;
+
+    const onPointerDown = (event) => {
+      if (!searchRef.current?.contains(event.target)) {
+        setSearchOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [searchOpen]);
+
+  const handleSearchChange = (event) => {
+    setQuery(event.target.value);
+    setSearchOpen(true);
+    setActiveResult(-1);
+  };
+
+  const selectResult = (product) => {
+    if (!product) return;
+
+    setQuery(product.name);
+    setSearchOpen(false);
+    setActiveResult(-1);
+  };
+
+  // Arrow keys walk the list, Enter takes the highlighted pair, Escape backs
+  // out one step at a time — panel first, then the term itself.
+  const handleSearchKeyDown = (event) => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+
+      if (searchOpen) {
+        setSearchOpen(false);
+      } else {
+        setQuery("");
+      }
+
+      return;
+    }
+
+    if (!results.length) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setSearchOpen(true);
+      setActiveResult((i) => (i + 1) % results.length);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setSearchOpen(true);
+      setActiveResult((i) => (i <= 0 ? results.length - 1 : i - 1));
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      selectResult(results[activeResult] || results[0]);
+    }
+  };
+
   return (
     <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
       <nav className="navbar">
@@ -72,15 +172,61 @@ const Nav = () => {
         </ul>
 
         <div className="nav-actions">
-          <label className="search-field">
-            <SearchIcon />
-            <input
-              type="search"
-              placeholder="Search"
-              className="search-input"
-              aria-label="Search products"
-            />
-          </label>
+          <div className="search-wrap" ref={searchRef}>
+            <label className="search-field">
+              <SearchIcon />
+              <input
+                type="search"
+                placeholder="Search"
+                className="search-input"
+                aria-label="Search products"
+                role="combobox"
+                aria-expanded={searchOpen && query.trim() !== ""}
+                aria-controls="search-results"
+                aria-autocomplete="list"
+                aria-activedescendant={
+                  activeResult >= 0 ? `search-result-${activeResult}` : undefined
+                }
+                value={query}
+                onChange={handleSearchChange}
+                onFocus={() => setSearchOpen(true)}
+                onKeyDown={handleSearchKeyDown}
+              />
+            </label>
+
+            {searchOpen && query.trim() !== "" && (
+              <ul className="search-results" id="search-results" role="listbox">
+                {results.length === 0 ? (
+                  <li className="search-empty">
+                    No pairs match “{query.trim()}”
+                  </li>
+                ) : (
+                  results.map((product, i) => (
+                    <li key={product.name}>
+                      <button
+                        type="button"
+                        id={`search-result-${i}`}
+                        role="option"
+                        aria-selected={i === activeResult}
+                        className={
+                          i === activeResult
+                            ? "search-result is-active"
+                            : "search-result"
+                        }
+                        onMouseEnter={() => setActiveResult(i)}
+                        onClick={() => selectResult(product)}
+                      >
+                        <span className="search-result-name">{product.name}</span>
+                        <span className="search-result-meta">
+                          {product.category} · {product.price}
+                        </span>
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+          </div>
 
           <button className="login-btn">Login</button>
 
