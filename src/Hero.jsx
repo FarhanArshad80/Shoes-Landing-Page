@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 const Star = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="m12 2.6 2.9 5.9 6.5.9-4.7 4.6 1.1 6.4-5.8-3-5.8 3 1.1-6.4L2.6 9.4l6.5-.9z" />
@@ -26,6 +28,24 @@ const socials = [
   },
 ];
 
+// The featured pair, in the sizes it actually exists in. `left` is what the
+// warehouse says: 0 means the row is unbuyable rather than merely dimmed,
+// and a low number is worth saying out loud.
+const sizes = [
+  { us: 7, left: 4 },
+  { us: 7.5, left: 0 },
+  { us: 8, left: 6 },
+  { us: 8.5, left: 2 },
+  { us: 9, left: 9 },
+  { us: 9.5, left: 1 },
+  { us: 10, left: 0 },
+  { us: 10.5, left: 5 },
+  { us: 11, left: 3 },
+  { us: 12, left: 0 },
+];
+
+const LOW_STOCK_AT = 2;
+
 const assurances = [
   "Free express shipping over $150",
   "30-day no-questions returns",
@@ -35,6 +55,26 @@ const assurances = [
 ];
 
 const Hero = () => {
+  const [size, setSize] = useState(null);
+  const [added, setAdded] = useState(false);
+
+  const selected = sizes.find((option) => option.us === size);
+  const lowStock = selected && selected.left <= LOW_STOCK_AT;
+
+  // Picking a different size means the previous confirmation is about a bag
+  // that no longer reflects what is selected.
+  useEffect(() => {
+    setAdded(false);
+  }, [size]);
+
+  // Nothing is really added to anything yet — but the button should at
+  // least stop pretending the size question was never asked.
+  const handleShop = () => {
+    if (!selected) return;
+
+    setAdded(true);
+  };
+
   return (
     <>
       <main className="hero">
@@ -57,9 +97,55 @@ const Hero = () => {
             moving. Go out and play.
           </p>
 
+          <fieldset className="size-picker">
+            <legend>
+              Select size
+              <span className="size-guide">US</span>
+            </legend>
+
+            <div className="size-row">
+              {sizes.map(({ us, left }) => {
+                const soldOut = left === 0;
+
+                return (
+                  <button
+                    key={us}
+                    type="button"
+                    className={`size-chip${us === size ? " is-selected" : ""}${
+                      soldOut ? " is-gone" : ""
+                    }`}
+                    onClick={() => setSize(us)}
+                    disabled={soldOut}
+                    aria-pressed={us === size}
+                    aria-label={
+                      soldOut
+                        ? `US ${us} — sold out`
+                        : `US ${us} — ${left} left`
+                    }
+                  >
+                    {us}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="size-note" aria-live="polite">
+              {!selected
+                ? "Runs true to size — pick yours to continue."
+                : lowStock
+                ? `Only ${selected.left} left in US ${selected.us}.`
+                : `US ${selected.us} in stock, ships today.`}
+            </p>
+          </fieldset>
+
           <div className="btn">
-            <button className="primary">
-              Shop Now
+            <button
+              className="primary"
+              onClick={handleShop}
+              disabled={!selected}
+              title={selected ? undefined : "Select a size first"}
+            >
+              {added ? `Added — US ${selected.us}` : "Shop Now"}
               <Arrow />
             </button>
             <button className="ghost">Browse Category</button>

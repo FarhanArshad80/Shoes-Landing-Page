@@ -371,6 +371,108 @@
   border-color: rgba(255, 255, 255, 0.26);
 }
 
+/* ---------- Size picker ---------- */
+
+.size-picker {
+  margin: 0 0 26px;
+  padding: 0;
+  border: 0;
+}
+
+.size-picker legend {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0;
+  margin-bottom: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.size-guide {
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  color: var(--faint);
+}
+
+.size-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.size-chip {
+  min-width: 52px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--glass);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.25s var(--ease),
+    background 0.25s var(--ease),
+    transform 0.25s var(--ease);
+}
+
+.size-chip:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--glass-strong);
+}
+
+.size-chip.is-selected {
+  border-color: var(--text);
+  background: var(--text);
+  color: #0a0a0b;
+}
+
+/* A sold-out size is struck through rather than hidden — the row keeps its
+   shape, and it is clear the size exists and simply is not here today. */
+.size-chip.is-gone {
+  cursor: not-allowed;
+  color: var(--faint);
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.size-note {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+
+.btn .primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.btn .primary:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.btn .primary:disabled:hover svg {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .size-chip,
+  .size-chip:hover:not(:disabled) {
+    transition: none;
+    transform: none;
+  }
+}
+
 /* ---------- Trust row ---------- */
 
 .trust-info {
