@@ -393,9 +393,34 @@
 }
 
 .size-guide {
+  display: inline-flex;
+  gap: 2px;
   font-size: 0.62rem;
   letter-spacing: 0.2em;
   color: var(--faint);
+}
+
+.system-btn {
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  transition:
+    background 0.25s var(--ease),
+    color 0.25s var(--ease);
+}
+
+.system-btn:hover {
+  color: var(--text);
+}
+
+.system-btn.is-active {
+  background: var(--glass-strong);
+  color: var(--text);
 }
 
 .size-row {
@@ -466,6 +491,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .system-btn,
   .size-chip,
   .size-chip:hover:not(:disabled) {
     transition: none;

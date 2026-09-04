@@ -31,20 +31,51 @@ const socials = [
 // The featured pair, in the sizes it actually exists in. `left` is what the
 // warehouse says: 0 means the row is unbuyable rather than merely dimmed,
 // and a low number is worth saying out loud.
+//
+// The UK, EU and CM columns are written out rather than derived. They are
+// roughly a half-size apart from US, but only roughly — EU jumps 40, 40.5,
+// 41, 42 with no 41.5 — so a formula would quietly invent sizes that no
+// shelf actually holds.
 const sizes = [
-  { us: 7, left: 4 },
-  { us: 7.5, left: 0 },
-  { us: 8, left: 6 },
-  { us: 8.5, left: 2 },
-  { us: 9, left: 9 },
-  { us: 9.5, left: 1 },
-  { us: 10, left: 0 },
-  { us: 10.5, left: 5 },
-  { us: 11, left: 3 },
-  { us: 12, left: 0 },
+  { us: 7, uk: 6.5, eu: 40, cm: 25, left: 4 },
+  { us: 7.5, uk: 7, eu: 40.5, cm: 25.4, left: 0 },
+  { us: 8, uk: 7.5, eu: 41, cm: 26, left: 6 },
+  { us: 8.5, uk: 8, eu: 42, cm: 26.7, left: 2 },
+  { us: 9, uk: 8.5, eu: 42.5, cm: 27, left: 9 },
+  { us: 9.5, uk: 9, eu: 43, cm: 27.5, left: 1 },
+  { us: 10, uk: 9.5, eu: 44, cm: 28, left: 0 },
+  { us: 10.5, uk: 10, eu: 44.5, cm: 28.5, left: 5 },
+  { us: 11, uk: 10.5, eu: 45, cm: 29, left: 3 },
+  { us: 12, uk: 11.5, eu: 46, cm: 30, left: 0 },
 ];
 
+const systems = ["US", "UK", "EU", "CM"];
+const SYSTEM_KEY = "landing.size-system";
 const LOW_STOCK_AT = 2;
+
+// Someone shopping from Berlin should not have to convert in their head, and
+// should not have to convert again on their next visit either.
+function recallSystem() {
+  try {
+    const stored = localStorage.getItem(SYSTEM_KEY);
+
+    return systems.includes(stored) ? stored : "US";
+  } catch (error) {
+    return "US";
+  }
+}
+
+// Centimetres are the one system people read to a decimal — 26.7 is a real
+// distinction there, where "US 8.50" would just look wrong.
+function sizeValue(option, system) {
+  const value = option[system.toLowerCase()];
+
+  return system === "CM" ? value.toFixed(1) : String(value);
+}
+
+function sizeName(option, system) {
+  return `${system} ${sizeValue(option, system)}`;
+}
 
 const assurances = [
   "Free express shipping over $150",
@@ -57,9 +88,22 @@ const assurances = [
 const Hero = () => {
   const [size, setSize] = useState(null);
   const [added, setAdded] = useState(false);
+  const [system, setSystem] = useState(recallSystem);
 
   const selected = sizes.find((option) => option.us === size);
   const lowStock = selected && selected.left <= LOW_STOCK_AT;
+
+  // The selection is always held as a US size and only translated on the way
+  // out, so switching systems relabels the row without losing the pick.
+  const chooseSystem = (next) => {
+    setSystem(next);
+
+    try {
+      localStorage.setItem(SYSTEM_KEY, next);
+    } catch (error) {
+      /* storage unavailable — the choice just will not survive a reload */
+    }
+  };
 
   // Picking a different size means the previous confirmation is about a bag
   // that no longer reflects what is selected.
@@ -100,12 +144,28 @@ const Hero = () => {
           <fieldset className="size-picker">
             <legend>
               Select size
-              <span className="size-guide">US</span>
+              <span className="size-guide" role="group" aria-label="Size system">
+                {systems.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className={
+                      id === system ? "system-btn is-active" : "system-btn"
+                    }
+                    onClick={() => chooseSystem(id)}
+                    aria-pressed={id === system}
+                  >
+                    {id}
+                  </button>
+                ))}
+              </span>
             </legend>
 
             <div className="size-row">
-              {sizes.map(({ us, left }) => {
+              {sizes.map((option) => {
+                const { us, left } = option;
                 const soldOut = left === 0;
+                const name = sizeName(option, system);
 
                 return (
                   <button
@@ -118,12 +178,10 @@ const Hero = () => {
                     disabled={soldOut}
                     aria-pressed={us === size}
                     aria-label={
-                      soldOut
-                        ? `US ${us} — sold out`
-                        : `US ${us} — ${left} left`
+                      soldOut ? `${name} — sold out` : `${name} — ${left} left`
                     }
                   >
-                    {us}
+                    {sizeValue(option, system)}
                   </button>
                 );
               })}
@@ -133,8 +191,8 @@ const Hero = () => {
               {!selected
                 ? "Runs true to size — pick yours to continue."
                 : lowStock
-                ? `Only ${selected.left} left in US ${selected.us}.`
-                : `US ${selected.us} in stock, ships today.`}
+                ? `Only ${selected.left} left in ${sizeName(selected, system)}.`
+                : `${sizeName(selected, system)} in stock, ships today.`}
             </p>
           </fieldset>
 
@@ -145,7 +203,7 @@ const Hero = () => {
               disabled={!selected}
               title={selected ? undefined : "Select a size first"}
             >
-              {added ? `Added — US ${selected.us}` : "Shop Now"}
+              {added ? `Added — ${sizeName(selected, system)}` : "Shop Now"}
               <Arrow />
             </button>
             <button className="ghost">Browse Category</button>
