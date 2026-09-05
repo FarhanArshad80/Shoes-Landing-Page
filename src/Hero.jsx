@@ -51,7 +51,10 @@ const sizes = [
 
 const systems = ["US", "UK", "EU", "CM"];
 const SYSTEM_KEY = "landing.size-system";
+const BAG_KEY = "landing.bag";
 const LOW_STOCK_AT = 2;
+const PRICE = 189;
+const FREE_SHIPPING_AT = 150;
 
 // Someone shopping from Berlin should not have to convert in their head, and
 // should not have to convert again on their next visit either.
@@ -63,6 +66,37 @@ function recallSystem() {
   } catch (error) {
     return "US";
   }
+}
+
+// The bag is stored as US sizes and quantities and nothing else. Prices and
+// stock are read from `sizes` at render time, so a bag left in storage over
+// a price change or a restock cannot go on quoting the old numbers.
+function recallBag() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(BAG_KEY));
+
+    if (!Array.isArray(stored)) return [];
+
+    return stored
+      .map((line) => ({ us: Number(line?.us), qty: Math.floor(Number(line?.qty)) }))
+      .filter((line) => {
+        const option = sizes.find((size) => size.us === line.us);
+
+        // A size that has since sold out, or been reduced below what is in
+        // the bag, is trimmed to what the shelf can actually honour.
+        return option && option.left > 0 && line.qty >= 1;
+      })
+      .map((line) => ({
+        ...line,
+        qty: Math.min(line.qty, sizes.find((size) => size.us === line.us).left),
+      }));
+  } catch (error) {
+    return [];
+  }
+}
+
+function money(amount) {
+  return `$${amount.toLocaleString("en-US")}`;
 }
 
 // Centimetres are the one system people read to a decimal — 26.7 is a real
@@ -89,9 +123,37 @@ const Hero = () => {
   const [size, setSize] = useState(null);
   const [added, setAdded] = useState(false);
   const [system, setSystem] = useState(recallSystem);
+  const [bag, setBag] = useState(recallBag);
 
   const selected = sizes.find((option) => option.us === size);
   const lowStock = selected && selected.left <= LOW_STOCK_AT;
+
+  const bagCount = bag.reduce((total, line) => total + line.qty, 0);
+  const subtotal = bagCount * PRICE;
+
+  // How many of the selected size are already spoken for, so the button can
+  // stop offering an eleventh pair of a size with nine on the shelf.
+  const inBag = bag.find((line) => line.us === size)?.qty || 0;
+  const atLimit = Boolean(selected) && inBag >= selected.left;
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(BAG_KEY, JSON.stringify(bag));
+    } catch (error) {
+      /* storage unavailable — the bag just will not survive a reload */
+    }
+  }, [bag]);
+
+  const setQuantity = (us, next) => {
+    const option = sizes.find((item) => item.us === us);
+    const capped = Math.min(Math.max(next, 0), option ? option.left : 0);
+
+    setBag((current) =>
+      capped === 0
+        ? current.filter((line) => line.us !== us)
+        : current.map((line) => (line.us === us ? { ...line, qty: capped } : line))
+    );
+  };
 
   // The selection is always held as a US size and only translated on the way
   // out, so switching systems relabels the row without losing the pick.
@@ -111,10 +173,19 @@ const Hero = () => {
     setAdded(false);
   }, [size]);
 
-  // Nothing is really added to anything yet — but the button should at
-  // least stop pretending the size question was never asked.
+  // Adds the selected size, or one more of it. The warehouse count is the
+  // ceiling: offering a pair that cannot be shipped only moves the
+  // disappointment further down the checkout.
   const handleShop = () => {
-    if (!selected) return;
+    if (!selected || atLimit) return;
+
+    setBag((current) =>
+      current.some((line) => line.us === selected.us)
+        ? current.map((line) =>
+            line.us === selected.us ? { ...line, qty: line.qty + 1 } : line
+          )
+        : [...current, { us: selected.us, qty: 1 }]
+    );
 
     setAdded(true);
   };
@@ -200,14 +271,97 @@ const Hero = () => {
             <button
               className="primary"
               onClick={handleShop}
-              disabled={!selected}
-              title={selected ? undefined : "Select a size first"}
+              disabled={!selected || atLimit}
+              title={
+                !selected
+                  ? "Select a size first"
+                  : atLimit
+                  ? `That's every ${sizeName(selected, system)} we have`
+                  : undefined
+              }
             >
-              {added ? `Added — ${sizeName(selected, system)}` : "Shop Now"}
+              {atLimit
+                ? `All ${selected.left} in your bag`
+                : added
+                ? `Added — ${sizeName(selected, system)}`
+                : "Shop Now"}
               <Arrow />
             </button>
             <button className="ghost">Browse Category</button>
           </div>
+
+          {bagCount > 0 && (
+            <section className="bag" aria-label="Your bag">
+              <header className="bag-head">
+                <h2>
+                  Your bag
+                  <span className="bag-count">{bagCount}</span>
+                </h2>
+                <button
+                  type="button"
+                  className="bag-clear"
+                  onClick={() => setBag([])}
+                >
+                  Empty
+                </button>
+              </header>
+
+              <ul className="bag-lines">
+                {bag.map((line) => {
+                  const option = sizes.find((item) => item.us === line.us);
+                  const name = sizeName(option, system);
+
+                  return (
+                    <li className="bag-line" key={line.us}>
+                      <span className="bag-size">{name}</span>
+
+                      <span className="bag-qty">
+                        <button
+                          type="button"
+                          onClick={() => setQuantity(line.us, line.qty - 1)}
+                          aria-label={`Remove one ${name}`}
+                        >
+                          &minus;
+                        </button>
+                        <span aria-live="polite">{line.qty}</span>
+                        <button
+                          type="button"
+                          onClick={() => setQuantity(line.us, line.qty + 1)}
+                          disabled={line.qty >= option.left}
+                          aria-label={`Add one ${name}`}
+                        >
+                          +
+                        </button>
+                      </span>
+
+                      <span className="bag-price">{money(line.qty * PRICE)}</span>
+
+                      <button
+                        type="button"
+                        className="bag-remove"
+                        onClick={() => setQuantity(line.us, 0)}
+                        aria-label={`Remove ${name} from your bag`}
+                      >
+                        &times;
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <footer className="bag-foot">
+                <span className="bag-subtotal">
+                  Subtotal
+                  <strong>{money(subtotal)}</strong>
+                </span>
+                <span className="bag-shipping">
+                  {subtotal >= FREE_SHIPPING_AT
+                    ? "Free express shipping included"
+                    : `${money(FREE_SHIPPING_AT - subtotal)} away from free express shipping`}
+                </span>
+              </footer>
+            </section>
+          )}
 
           <div className="trust-info">
             <div className="item">

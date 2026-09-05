@@ -501,6 +501,204 @@
 
 /* ---------- Trust row ---------- */
 
+/* Bag. It sits in the hero column rather than behind a drawer icon — on a
+   one-product page there is nothing to hide it for, and a bag you can see is
+   a bag you remember you have. */
+.bag {
+  margin-top: 26px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+}
+
+/* The hero staggers its children in on load. The bag arrives later, on a
+   click, and inherits a delay meant for a page that is still painting — so
+   it would hold at opacity 0 for half a second after the button was pressed.
+   Matching the nth-child specificity and landing after it undoes that. */
+.hero-content > .bag {
+  animation-delay: 0s;
+}
+
+.bag-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.bag-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.bag-count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--pill);
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bag-clear {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--faint);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.2s var(--ease);
+}
+
+.bag-clear:hover { color: var(--text); }
+
+.bag-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.bag-line {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.bag-line:last-child { border-bottom: none; padding-bottom: 0; }
+
+.bag-size {
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.bag-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  padding: 2px;
+}
+
+.bag-qty button {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.bag-qty button:hover:not(:disabled) {
+  background: var(--glass-strong);
+  color: var(--text);
+}
+
+.bag-qty button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.bag-qty span {
+  min-width: 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.bag-price {
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.bag-remove {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--pill);
+  background: transparent;
+  color: var(--faint);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.bag-remove:hover {
+  background: rgba(255, 45, 45, 0.14);
+  color: var(--accent);
+}
+
+.bag-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.bag-subtotal {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.bag-subtotal strong {
+  font-size: 1.15rem;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The shipping line is the one thing here that can change what someone
+   does next, so it gets the accent rather than the muted grey. */
+.bag-shipping {
+  font-size: 0.78rem;
+  color: var(--accent-warm);
+}
+
+@media (max-width: 480px) {
+  .bag-line {
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas: "size qty remove" "price price price";
+    row-gap: 6px;
+  }
+
+  .bag-size { grid-area: size; }
+  .bag-qty { grid-area: qty; }
+  .bag-remove { grid-area: remove; }
+  .bag-price { grid-area: price; }
+}
+
 .trust-info {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
