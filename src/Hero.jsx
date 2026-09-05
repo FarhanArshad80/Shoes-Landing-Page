@@ -52,6 +52,8 @@ const sizes = [
 const systems = ["US", "UK", "EU", "CM"];
 const SYSTEM_KEY = "landing.size-system";
 const BAG_KEY = "landing.bag";
+const ALERTS_KEY = "landing.restock-alerts";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LOW_STOCK_AT = 2;
 const PRICE = 189;
 const FREE_SHIPPING_AT = 150;
@@ -95,6 +97,18 @@ function recallBag() {
   }
 }
 
+// Which sold-out sizes this visitor has already asked to hear about. Kept as
+// US sizes so the list survives switching between UK, EU and CM.
+function recallAlerts() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(ALERTS_KEY));
+
+    return Array.isArray(stored) ? stored.map(Number).filter(Number.isFinite) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
 function money(amount) {
   return `$${amount.toLocaleString("en-US")}`;
 }
@@ -124,6 +138,10 @@ const Hero = () => {
   const [added, setAdded] = useState(false);
   const [system, setSystem] = useState(recallSystem);
   const [bag, setBag] = useState(recallBag);
+  const [alerts, setAlerts] = useState(recallAlerts);
+  const [asking, setAsking] = useState(null);
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const selected = sizes.find((option) => option.us === size);
   const lowStock = selected && selected.left <= LOW_STOCK_AT;
@@ -143,6 +161,40 @@ const Hero = () => {
       /* storage unavailable — the bag just will not survive a reload */
     }
   }, [bag]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ALERTS_KEY, JSON.stringify(alerts));
+    } catch (error) {
+      /* storage unavailable — the request just will not be remembered here */
+    }
+  }, [alerts]);
+
+  const askedSize = sizes.find((option) => option.us === asking);
+
+  // Tapping a sold-out size opens the request; tapping it again closes it,
+  // so the same chip both asks and takes it back.
+  const handleGone = (us) => {
+    setAsking((current) => (current === us ? null : us));
+    setEmailError("");
+  };
+
+  const submitAlert = (event) => {
+    event.preventDefault();
+
+    if (!EMAIL_RE.test(email.trim())) {
+      setEmailError("That doesn't look like an email address.");
+      return;
+    }
+
+    // Nothing is posted anywhere yet — this is the shape the request takes
+    // once there is a backend to take it.
+    setAlerts((current) =>
+      current.includes(asking) ? current : [...current, asking]
+    );
+    setAsking(null);
+    setEmailError("");
+  };
 
   const setQuantity = (us, next) => {
     const option = sizes.find((item) => item.us === us);
@@ -236,6 +288,7 @@ const Hero = () => {
               {sizes.map((option) => {
                 const { us, left } = option;
                 const soldOut = left === 0;
+                const watching = alerts.includes(us);
                 const name = sizeName(option, system);
 
                 return (
@@ -244,12 +297,17 @@ const Hero = () => {
                     type="button"
                     className={`size-chip${us === size ? " is-selected" : ""}${
                       soldOut ? " is-gone" : ""
+                    }${watching ? " is-watched" : ""}${
+                      asking === us ? " is-asking" : ""
                     }`}
-                    onClick={() => setSize(us)}
-                    disabled={soldOut}
-                    aria-pressed={us === size}
+                    onClick={() => (soldOut ? handleGone(us) : setSize(us))}
+                    aria-pressed={soldOut ? asking === us : us === size}
                     aria-label={
-                      soldOut ? `${name} — sold out` : `${name} — ${left} left`
+                      soldOut
+                        ? watching
+                          ? `${name} — sold out, you'll be emailed when it's back`
+                          : `${name} — sold out, ask to be told when it's back`
+                        : `${name} — ${left} left`
                     }
                   >
                     {sizeValue(option, system)}
@@ -258,6 +316,35 @@ const Hero = () => {
               })}
             </div>
 
+            {askedSize && (
+              <form className="restock" onSubmit={submitAlert}>
+                <label htmlFor="restock-email">
+                  {sizeName(askedSize, system)} is gone. Tell you when it's back?
+                </label>
+
+                <div className="restock-row">
+                  <input
+                    id="restock-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      setEmailError("");
+                    }}
+                    aria-invalid={Boolean(emailError)}
+                    aria-describedby={emailError ? "restock-error" : undefined}
+                  />
+                  <button type="submit">Notify me</button>
+                </div>
+
+                {emailError && (
+                  <p className="restock-error" id="restock-error">{emailError}</p>
+                )}
+              </form>
+            )}
+
             <p className="size-note" aria-live="polite">
               {!selected
                 ? "Runs true to size — pick yours to continue."
@@ -265,6 +352,19 @@ const Hero = () => {
                 ? `Only ${selected.left} left in ${sizeName(selected, system)}.`
                 : `${sizeName(selected, system)} in stock, ships today.`}
             </p>
+
+            {/* Its own line rather than sharing the stock note — what is in
+                stock now and what you are waiting on are two separate
+                answers, and one should not hide the other. */}
+            {alerts.length > 0 && (
+              <p className="restock-note">
+                We'll email you when{" "}
+                {alerts
+                  .map((us) => sizeName(sizes.find((option) => option.us === us), system))
+                  .join(" and ")}{" "}
+                {alerts.length > 1 ? "are" : "is"} back.
+              </p>
+            )}
           </fieldset>
 
           <div className="btn">

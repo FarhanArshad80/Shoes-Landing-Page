@@ -447,7 +447,7 @@
     transform 0.25s var(--ease);
 }
 
-.size-chip:hover:not(:disabled) {
+.size-chip:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.3);
   background: var(--glass-strong);
@@ -460,12 +460,112 @@
 }
 
 /* A sold-out size is struck through rather than hidden — the row keeps its
-   shape, and it is clear the size exists and simply is not here today. */
+   shape, and it is clear the size exists and simply is not here today. It
+   stays a live button, because there is still something to do with it. */
 .size-chip.is-gone {
-  cursor: not-allowed;
   color: var(--faint);
   text-decoration: line-through;
   opacity: 0.55;
+}
+
+.size-chip.is-gone:hover,
+.size-chip.is-gone.is-asking {
+  opacity: 0.9;
+}
+
+.size-chip.is-gone.is-asking {
+  border-color: var(--accent);
+}
+
+/* A dot, not a badge — enough to spot the size you are waiting on without
+   the row turning into a scoreboard. */
+.size-chip.is-watched {
+  position: relative;
+  opacity: 0.8;
+}
+
+.size-chip.is-watched::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--pill);
+  background: var(--accent-warm);
+}
+
+.restock {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--glass);
+}
+
+.restock label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.restock-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.restock input {
+  flex: 1 1 180px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.restock input::placeholder { color: var(--faint); }
+
+.restock input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.restock input[aria-invalid="true"] {
+  border-color: var(--accent);
+}
+
+.restock button {
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--text);
+  color: #0a0a0b;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s var(--ease);
+}
+
+.restock button:hover { opacity: 0.85; }
+
+.restock-note {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: var(--accent-warm);
+}
+
+.restock-error {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  color: var(--accent);
 }
 
 .size-note {
@@ -493,7 +593,7 @@
 @media (prefers-reduced-motion: reduce) {
   .system-btn,
   .size-chip,
-  .size-chip:hover:not(:disabled) {
+  .size-chip:hover {
     transition: none;
     transform: none;
   }
