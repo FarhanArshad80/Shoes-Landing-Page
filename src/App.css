@@ -786,6 +786,39 @@
   color: var(--accent-warm);
 }
 
+/* Stands where the bag was standing a second ago, so the offer to bring it
+   back appears in the space the loss just opened rather than somewhere else
+   on the page. */
+.bag-undo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  animation: bag-undo-in 0.25s ease-out;
+}
+
+.bag-undo button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-warm);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@keyframes bag-undo-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 480px) {
   .bag-line {
     grid-template-columns: 1fr auto auto;

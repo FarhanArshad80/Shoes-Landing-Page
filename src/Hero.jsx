@@ -55,6 +55,10 @@ const BAG_KEY = "landing.bag";
 const ALERTS_KEY = "landing.restock-alerts";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LOW_STOCK_AT = 2;
+// How long an emptied bag is held before it is really gone. Long enough to
+// notice the mistake and reach for the button, short enough that the banner
+// is not still sitting there once the page has moved on.
+const UNDO_SECONDS = 8;
 const PRICE = 189;
 const FREE_SHIPPING_AT = 150;
 
@@ -140,6 +144,7 @@ const Hero = () => {
   const [bag, setBag] = useState(recallBag);
   const [alerts, setAlerts] = useState(recallAlerts);
   const [asking, setAsking] = useState(null);
+  const [emptied, setEmptied] = useState(null);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
 
@@ -169,6 +174,31 @@ const Hero = () => {
       /* storage unavailable — the request just will not be remembered here */
     }
   }, [alerts]);
+
+  // Emptying the bag was one click and final. The lines are kept aside for a
+  // few seconds instead, so a mis-click costs a click back rather than
+  // picking every size over again.
+  const emptyBag = () => {
+    if (bag.length === 0) return;
+
+    setEmptied(bag);
+    setBag([]);
+  };
+
+  const undoEmpty = () => {
+    if (!emptied) return;
+
+    setBag(emptied);
+    setEmptied(null);
+  };
+
+  useEffect(() => {
+    if (!emptied) return;
+
+    const timer = setTimeout(() => setEmptied(null), UNDO_SECONDS * 1000);
+
+    return () => clearTimeout(timer);
+  }, [emptied]);
 
   const askedSize = sizes.find((option) => option.us === asking);
 
@@ -230,6 +260,10 @@ const Hero = () => {
   // disappointment further down the checkout.
   const handleShop = () => {
     if (!selected || atLimit) return;
+
+    // Starting a new bag is a decision about the old one: restoring it now
+    // would silently swallow the pair just added.
+    setEmptied(null);
 
     setBag((current) =>
       current.some((line) => line.us === selected.us)
@@ -400,7 +434,7 @@ const Hero = () => {
                 <button
                   type="button"
                   className="bag-clear"
-                  onClick={() => setBag([])}
+                  onClick={emptyBag}
                 >
                   Empty
                 </button>
@@ -461,6 +495,17 @@ const Hero = () => {
                 </span>
               </footer>
             </section>
+          )}
+
+          {/* Outside the bag on purpose — by the time this shows there is no
+              bag left to hang it off. */}
+          {emptied && (
+            <p className="bag-undo" role="status">
+              Bag emptied.
+              <button type="button" onClick={undoEmpty}>
+                Undo
+              </button>
+            </p>
           )}
 
           <div className="trust-info">
