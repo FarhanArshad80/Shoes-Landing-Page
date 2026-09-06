@@ -575,6 +575,114 @@
   min-height: 1.2em;
 }
 
+/* The fitter borrows the restock panel's frame — both are the same kind of
+   thing, a small aside that opens under the size row — so opening one does
+   not look like arriving somewhere new. */
+.fitter {
+  margin-top: 14px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--glass);
+}
+
+/* Closed, the summary's own padding is the whole box; open, the last child
+   needs room under it whether that is the result line or the button. */
+.fitter[open] { padding-bottom: 16px; }
+
+.fitter summary {
+  padding: 12px 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  transition: color 0.2s var(--ease);
+}
+
+.fitter summary:hover { color: var(--text); }
+
+/* The default triangle sits too low against this type; a rotating chevron
+   of our own tracks the open state instead. */
+.fitter summary::-webkit-details-marker { display: none; }
+
+.fitter summary::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 10px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(-45deg);
+  transition: transform 0.2s var(--ease);
+}
+
+.fitter[open] summary::before {
+  transform: translateY(-4px) rotate(45deg);
+}
+
+.fitter-how {
+  margin: 0 0 12px;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--faint);
+}
+
+.fitter-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.fitter-field input {
+  width: 96px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.fitter-field input::placeholder { color: var(--faint); }
+
+.fitter-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.fitter-result {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--accent-warm);
+}
+
+.fitter-take {
+  margin: 12px 0 0;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+
+.fitter-take:hover { background: var(--bg-soft); }
+
+.fitter-take:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
 .btn .primary:disabled {
   cursor: not-allowed;
   opacity: 0.45;

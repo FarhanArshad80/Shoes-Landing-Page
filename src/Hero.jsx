@@ -129,6 +129,25 @@ function sizeName(option, system) {
   return `${system} ${sizeValue(option, system)}`;
 }
 
+// A foot shorter or longer than this is a mistyped number rather than a
+// foot — 18cm is a small child's and 34cm is past the end of the range
+// anything on this page is cut for.
+const MIN_FOOT_CM = 18;
+const MAX_FOOT_CM = 34;
+
+// The CM column is the length of foot each size is cut for, so a measured
+// foot can be matched straight against it with no conversion in between.
+//
+// The first size at or above the measurement wins rather than the nearest
+// one: a foot sitting between two sizes wants the larger. Half a size of
+// room is a shoe that fits; half a size short is a shoe that is returned.
+function recommendSize(centimetres) {
+  if (!Number.isFinite(centimetres)) return null;
+  if (centimetres < MIN_FOOT_CM || centimetres > MAX_FOOT_CM) return null;
+
+  return sizes.find((option) => option.cm >= centimetres) || null;
+}
+
 const assurances = [
   "Free express shipping over $150",
   "30-day no-questions returns",
@@ -145,6 +164,7 @@ const Hero = () => {
   const [alerts, setAlerts] = useState(recallAlerts);
   const [asking, setAsking] = useState(null);
   const [emptied, setEmptied] = useState(null);
+  const [foot, setFoot] = useState("");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
 
@@ -201,6 +221,12 @@ const Hero = () => {
   }, [emptied]);
 
   const askedSize = sizes.find((option) => option.us === asking);
+
+  // A half-typed "2" is not a wrong answer yet, so nothing is said until the
+  // number is at least plausibly a foot.
+  const measured = Number(foot.replace(",", "."));
+  const suggestion = recommendSize(measured);
+  const footTooBig = Number.isFinite(measured) && measured > MAX_FOOT_CM;
 
   // Tapping a sold-out size opens the request; tapping it again closes it,
   // so the same chip both asks and takes it back.
@@ -386,6 +412,57 @@ const Hero = () => {
                 ? `Only ${selected.left} left in ${sizeName(selected, system)}.`
                 : `${sizeName(selected, system)} in stock, ships today.`}
             </p>
+
+            {/* Folded away by default. Most people know their size, and the
+                ones who do not are the ones who go looking. */}
+            <details className="fitter">
+              <summary>Not sure? Measure your foot</summary>
+
+              <p className="fitter-how">
+                Stand on paper with your heel to a wall and mark your longest
+                toe. Measure heel to mark, in centimetres.
+              </p>
+
+              <label className="fitter-field">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  min={MIN_FOOT_CM}
+                  max={MAX_FOOT_CM}
+                  placeholder="26.5"
+                  value={foot}
+                  onChange={(event) => setFoot(event.target.value)}
+                  aria-label="Foot length in centimetres"
+                />
+                <span>cm</span>
+              </label>
+
+              <p className="fitter-result" aria-live="polite">
+                {!foot.trim()
+                  ? "We'll match it to the closest size we cut."
+                  : footTooBig
+                  ? `We stop at ${sizes[sizes.length - 1].cm} cm — that's past our largest pair.`
+                  : !suggestion
+                  ? "That doesn't look like a foot measurement."
+                  : suggestion.left === 0
+                  ? `${sizeName(suggestion, system)} is your size — and it's sold out. Tap it to be told when it's back.`
+                  : `${sizeName(suggestion, system)} is your size.`}
+              </p>
+
+              {suggestion && suggestion.left > 0 && (
+                <button
+                  type="button"
+                  className="fitter-take"
+                  onClick={() => setSize(suggestion.us)}
+                  disabled={suggestion.us === size}
+                >
+                  {suggestion.us === size
+                    ? "Selected"
+                    : `Select ${sizeName(suggestion, system)}`}
+                </button>
+              )}
+            </details>
 
             {/* Its own line rather than sharing the stock note — what is in
                 stock now and what you are waiting on are two separate
