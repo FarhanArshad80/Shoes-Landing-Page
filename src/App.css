@@ -562,6 +562,25 @@
   color: var(--accent-warm);
 }
 
+/* The size names inside the note are the cancel buttons. A dotted underline
+   rather than a solid one: it should read as a word in a sentence that
+   happens to be tappable, not as a link out of the page. */
+.restock-drop {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.restock-drop:hover,
+.restock-drop:focus-visible {
+  text-decoration: line-through solid;
+}
+
 .restock-error {
   margin: 8px 0 0;
   font-size: 0.78rem;

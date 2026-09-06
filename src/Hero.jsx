@@ -228,9 +228,24 @@ const Hero = () => {
   const suggestion = recommendSize(measured);
   const footTooBig = Number.isFinite(measured) && measured > MAX_FOOT_CM;
 
+  // Signing up was a one-way door: once a size was being watched, tapping it
+  // again only reopened a form that could not say "actually, don't".
+  const dropAlert = (us) => {
+    setAlerts((current) => current.filter((watched) => watched !== us));
+    setAsking(null);
+    setEmailError("");
+  };
+
   // Tapping a sold-out size opens the request; tapping it again closes it,
-  // so the same chip both asks and takes it back.
+  // so the same chip both asks and takes it back. A size already being
+  // watched skips the form — there is nothing left to ask for, so the tap
+  // goes straight to the one thing still worth doing with it.
   const handleGone = (us) => {
+    if (alerts.includes(us)) {
+      dropAlert(us);
+      return;
+    }
+
     setAsking((current) => (current === us ? null : us));
     setEmailError("");
   };
@@ -365,7 +380,7 @@ const Hero = () => {
                     aria-label={
                       soldOut
                         ? watching
-                          ? `${name} — sold out, you'll be emailed when it's back`
+                          ? `${name} — sold out, you'll be emailed when it's back. Tap to cancel`
                           : `${name} — sold out, ask to be told when it's back`
                         : `${name} — ${left} left`
                     }
@@ -470,9 +485,24 @@ const Hero = () => {
             {alerts.length > 0 && (
               <p className="restock-note">
                 We'll email you when{" "}
-                {alerts
-                  .map((us) => sizeName(sizes.find((option) => option.us === us), system))
-                  .join(" and ")}{" "}
+                {alerts.map((us, index) => {
+                  const option = sizes.find((item) => item.us === us);
+
+                  return (
+                    <span key={us}>
+                      {index > 0 && (index === alerts.length - 1 ? " and " : ", ")}
+                      <button
+                        type="button"
+                        className="restock-drop"
+                        onClick={() => dropAlert(us)}
+                        title={`Stop watching ${sizeName(option, system)}`}
+                        aria-label={`Stop watching ${sizeName(option, system)}`}
+                      >
+                        {sizeName(option, system)}
+                      </button>
+                    </span>
+                  );
+                })}{" "}
                 {alerts.length > 1 ? "are" : "is"} back.
               </p>
             )}
