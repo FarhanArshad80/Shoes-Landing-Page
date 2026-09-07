@@ -17,6 +17,36 @@ const catalogue = [
 
 const MAX_RESULTS = 5;
 
+// What was searched for last time. A shop gets visited more than once, and
+// the pair someone looked at on Tuesday is very often the pair they came
+// back for on Thursday - so an empty box is a question already answered.
+const RECENT_KEY = "landing.recent-searches";
+const MAX_RECENT = 4;
+
+// Storage is refused in private windows and when site data is blocked, so
+// every read stands on its own and an unusable one simply means no history.
+function recallSearches() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(RECENT_KEY));
+
+    if (!Array.isArray(stored)) return [];
+
+    return stored
+      .filter((term) => typeof term === "string" && term.trim() !== "")
+      .slice(0, MAX_RECENT);
+  } catch {
+    return [];
+  }
+}
+
+function storeSearches(terms) {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(terms));
+  } catch {
+    /* storage unavailable - the list still works, it just forgets */
+  }
+}
+
 function searchCatalogue(term) {
   const query = term.trim().toLowerCase();
 
@@ -54,10 +84,19 @@ const Nav = () => {
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeResult, setActiveResult] = useState(-1);
+  const [recent, setRecent] = useState(recallSearches);
   const menuBtnRef = useRef(null);
   const searchRef = useRef(null);
 
+  const trimmed = query.trim();
   const results = searchCatalogue(query);
+
+  // An empty box used to open onto nothing. It now offers what was searched
+  // for before, and the arrow keys walk that list exactly as they walk the
+  // results - one panel, one set of keys, whichever of the two is showing.
+  const showingRecent = trimmed === "" && recent.length > 0;
+  const options = showingRecent ? recent : results;
+  const panelOpen = searchOpen && (showingRecent || trimmed !== "");
 
   // Tighten the header once the page moves away from the top
   useEffect(() => {
@@ -108,11 +147,47 @@ const Nav = () => {
     setActiveResult(-1);
   };
 
+  // Newest first and no duplicates: searching the same pair twice should
+  // move it up the list rather than take a second slot in a list of four.
+  const rememberSearch = (term) => {
+    setRecent((current) => {
+      const next = [
+        term,
+        ...current.filter((seen) => seen.toLowerCase() !== term.toLowerCase()),
+      ].slice(0, MAX_RECENT);
+
+      storeSearches(next);
+
+      return next;
+    });
+  };
+
+  const forgetSearch = (term) => {
+    setRecent((current) => {
+      const next = current.filter((seen) => seen !== term);
+
+      storeSearches(next);
+
+      return next;
+    });
+  };
+
   const selectResult = (product) => {
     if (!product) return;
 
+    rememberSearch(product.name);
     setQuery(product.name);
     setSearchOpen(false);
+    setActiveResult(-1);
+  };
+
+  // Picking a past search puts the term back in the box and leaves the panel
+  // up, because the point of choosing it is to see what it matches.
+  const applyRecent = (term) => {
+    if (!term) return;
+
+    setQuery(term);
+    setSearchOpen(true);
     setActiveResult(-1);
   };
 
@@ -131,25 +206,29 @@ const Nav = () => {
       return;
     }
 
-    if (!results.length) return;
+    if (!options.length) return;
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setSearchOpen(true);
-      setActiveResult((i) => (i + 1) % results.length);
+      setActiveResult((i) => (i + 1) % options.length);
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
       setSearchOpen(true);
-      setActiveResult((i) => (i <= 0 ? results.length - 1 : i - 1));
+      setActiveResult((i) => (i <= 0 ? options.length - 1 : i - 1));
       return;
     }
 
     if (event.key === "Enter") {
       event.preventDefault();
-      selectResult(results[activeResult] || results[0]);
+
+      const chosen = options[activeResult] || options[0];
+
+      if (showingRecent) applyRecent(chosen);
+      else selectResult(chosen);
     }
   };
 
@@ -181,7 +260,7 @@ const Nav = () => {
                 className="search-input"
                 aria-label="Search products"
                 role="combobox"
-                aria-expanded={searchOpen && query.trim() !== ""}
+                aria-expanded={panelOpen}
                 aria-controls="search-results"
                 aria-autocomplete="list"
                 aria-activedescendant={
@@ -194,9 +273,49 @@ const Nav = () => {
               />
             </label>
 
-            {searchOpen && query.trim() !== "" && (
+            {panelOpen && (
               <ul className="search-results" id="search-results" role="listbox">
-                {results.length === 0 ? (
+                {showingRecent ? (
+                  <>
+                    <li className="search-recent-head" role="presentation">
+                      Recent searches
+                    </li>
+
+                    {recent.map((term, i) => (
+                      <li key={term} className="search-recent-row">
+                        <button
+                          type="button"
+                          id={`search-result-${i}`}
+                          role="option"
+                          aria-selected={i === activeResult}
+                          className={
+                            i === activeResult
+                              ? "search-result is-active"
+                              : "search-result"
+                          }
+                          onMouseEnter={() => setActiveResult(i)}
+                          onClick={() => applyRecent(term)}
+                        >
+                          <span className="search-result-name">{term}</span>
+                        </button>
+
+                        {/* Its own button rather than a handler on the row,
+                            so it can be tabbed to, it says which term it
+                            drops, and a click on it never falls through to
+                            the search underneath. */}
+                        <button
+                          type="button"
+                          className="search-recent-remove"
+                          onClick={() => forgetSearch(term)}
+                          aria-label={`Remove ${term} from recent searches`}
+                          title={`Remove ${term}`}
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </>
+                ) : results.length === 0 ? (
                   <li className="search-empty">
                     No pairs match “{query.trim()}”
                   </li>

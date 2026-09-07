@@ -184,6 +184,42 @@
   color: var(--muted);
 }
 
+/* The recent list shares the result rows, so only the parts unique to it
+   need styling: the heading above them and the cross that drops one. */
+.search-recent-head {
+  padding: 8px 12px 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.search-recent-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.search-recent-remove {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.search-recent-remove:hover {
+  background: var(--glass-strong);
+  color: var(--text);
+}
+
 .search-empty {
   padding: 12px;
   font-size: 0.8rem;
