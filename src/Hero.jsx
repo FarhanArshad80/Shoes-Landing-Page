@@ -148,6 +148,47 @@ function recommendSize(centimetres) {
   return sizes.find((option) => option.cm >= centimetres) || null;
 }
 
+// Most people's feet are not the same length, and the difference is commonly
+// a half size or more. A shoe fitted to the shorter one is a shoe that hurts
+// on the other foot, so where two measurements are given the longer is the
+// one that decides — which is what a fitter in a shop does with a Brannock
+// device and what nobody thinks to do at home with a ruler.
+function plausibleFoot(centimetres) {
+  return (
+    Number.isFinite(centimetres) &&
+    centimetres >= MIN_FOOT_CM &&
+    centimetres <= MAX_FOOT_CM
+  );
+}
+
+function longerFoot(left, right) {
+  const measurements = [left, right].filter(Number.isFinite);
+
+  return measurements.length > 0 ? Math.max(...measurements) : NaN;
+}
+
+// How much room is left over inside the recommended size. A foot 26.9cm long
+// in a size cut for 27cm has a millimetre to play with; the same size on a
+// 26.2cm foot is most of a size too big, and that is the pair that comes
+// back. Neither is wrong - the shelf holds what it holds - but only one of
+// them should be handed over without a word.
+//
+// Below this much slack the fit is simply the fit and there is nothing worth
+// saying. Above it, the size below is worth naming so the choice is a choice.
+const SNUG_CM = 0.2;
+const ROOMY_CM = 0.45;
+
+function fitNote(centimetres, option) {
+  if (!option || !Number.isFinite(centimetres)) return null;
+
+  const slack = option.cm - centimetres;
+
+  if (slack <= SNUG_CM) return "snug";
+  if (slack >= ROOMY_CM) return "roomy";
+
+  return null;
+}
+
 const assurances = [
   "Free express shipping over $150",
   "30-day no-questions returns",
@@ -165,6 +206,10 @@ const Hero = () => {
   const [asking, setAsking] = useState(null);
   const [emptied, setEmptied] = useState(null);
   const [foot, setFoot] = useState("");
+  // Optional, and second. Asking for two numbers up front makes the simple
+  // case look like paperwork; the field is there for the people who know
+  // their feet differ and want it accounted for.
+  const [otherFoot, setOtherFoot] = useState("");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
 
@@ -224,9 +269,24 @@ const Hero = () => {
 
   // A half-typed "2" is not a wrong answer yet, so nothing is said until the
   // number is at least plausibly a foot.
-  const measured = Number(foot.replace(",", "."));
+  const leftMeasured = Number(foot.replace(",", "."));
+  const rightMeasured = otherFoot.trim() ? Number(otherFoot.replace(",", ".")) : NaN;
+  const measured = longerFoot(
+    foot.trim() ? leftMeasured : NaN,
+    otherFoot.trim() ? rightMeasured : NaN
+  );
   const suggestion = recommendSize(measured);
   const footTooBig = Number.isFinite(measured) && measured > MAX_FOOT_CM;
+  // Only worth mentioning once both numbers are real. One field filled and
+  // the other half-typed is not a pair of feet yet.
+  // Both have to be plausible feet before they can be compared. Halfway
+  // through typing the second number it reads as 2, and "your feet differ by
+  // 24.5 cm" is not something to say to somebody mid-keystroke.
+  const mismatched =
+    plausibleFoot(leftMeasured) &&
+    plausibleFoot(rightMeasured) &&
+    Math.abs(leftMeasured - rightMeasured) >= 0.1;
+  const fit = fitNote(measured, suggestion);
 
   // Signing up was a one-way door: once a size was being watched, tapping it
   // again only reopened a form that could not say "actually, don't".
@@ -438,23 +498,42 @@ const Hero = () => {
                 toe. Measure heel to mark, in centimetres.
               </p>
 
-              <label className="fitter-field">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  min={MIN_FOOT_CM}
-                  max={MAX_FOOT_CM}
-                  placeholder="26.5"
-                  value={foot}
-                  onChange={(event) => setFoot(event.target.value)}
-                  aria-label="Foot length in centimetres"
-                />
-                <span>cm</span>
-              </label>
+              <div className="fitter-fields">
+                <label className="fitter-field">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    min={MIN_FOOT_CM}
+                    max={MAX_FOOT_CM}
+                    placeholder="26.5"
+                    value={foot}
+                    onChange={(event) => setFoot(event.target.value)}
+                    aria-label="Left foot length in centimetres"
+                  />
+                  <span>cm left</span>
+                </label>
+
+                {/* Left blank by anyone who does not care, and the answer is
+                    the same as it ever was for them. */}
+                <label className="fitter-field">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    min={MIN_FOOT_CM}
+                    max={MAX_FOOT_CM}
+                    placeholder="optional"
+                    value={otherFoot}
+                    onChange={(event) => setOtherFoot(event.target.value)}
+                    aria-label="Right foot length in centimetres, optional"
+                  />
+                  <span>cm right</span>
+                </label>
+              </div>
 
               <p className="fitter-result" aria-live="polite">
-                {!foot.trim()
+                {!foot.trim() && !otherFoot.trim()
                   ? "We'll match it to the closest size we cut."
                   : footTooBig
                   ? `We stop at ${sizes[sizes.length - 1].cm} cm — that's past our largest pair.`
@@ -464,6 +543,35 @@ const Hero = () => {
                   ? `${sizeName(suggestion, system)} is your size — and it's sold out. Tap it to be told when it's back.`
                   : `${sizeName(suggestion, system)} is your size.`}
               </p>
+
+              {/* Two feet of different lengths is the ordinary case, not a
+                  problem to be flagged — so this says what was done about it
+                  rather than warning anyone about their own body. */}
+              {suggestion && mismatched && (
+                <p className="fitter-aside">
+                  Your feet differ by{" "}
+                  {Math.abs(leftMeasured - rightMeasured).toFixed(1)} cm. We
+                  have sized the longer one — a shoe fitted to the shorter foot
+                  is the one that hurts.
+                </p>
+              )}
+
+              {/* How the pair will actually sit, which the size number alone
+                  does not say. Only at the edges: in the middle of a size the
+                  fit is simply the fit. */}
+              {suggestion && suggestion.left > 0 && fit === "snug" && (
+                <p className="fitter-aside">
+                  That is the tighter end of {sizeName(suggestion, system)}. If
+                  you like room to move, take the next size up.
+                </p>
+              )}
+
+              {suggestion && suggestion.left > 0 && fit === "roomy" && (
+                <p className="fitter-aside">
+                  {sizeName(suggestion, system)} will sit loose on you — it is
+                  the smallest we cut that your foot fits into.
+                </p>
+              )}
 
               {suggestion && suggestion.left > 0 && (
                 <button

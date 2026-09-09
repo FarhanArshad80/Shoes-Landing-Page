@@ -683,6 +683,15 @@
   color: var(--faint);
 }
 
+/* Wrapping rather than shrinking: two 96px fields and their units do not fit
+   side by side on a narrow phone, and a squeezed number field is worse than a
+   second row. */
+.fitter-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
 .fitter-field {
   display: inline-flex;
   align-items: center;
@@ -714,6 +723,15 @@
   margin: 12px 0 0;
   font-size: 0.82rem;
   color: var(--accent-warm);
+}
+
+/* Quieter than the result above it: the size is the answer, and these lines
+   are the caveats that come with it. */
+.fitter-aside {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--faint);
 }
 
 .fitter-take {
