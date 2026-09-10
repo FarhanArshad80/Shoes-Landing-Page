@@ -785,6 +785,36 @@
 /* Bag. It sits in the hero column rather than behind a drawer icon — on a
    one-product page there is nothing to hide it for, and a bag you can see is
    a bag you remember you have. */
+/* Says what the shelf did while nobody was looking. Warm rather than red:
+   a pair selling out is news about the shop, not an error the shopper made. */
+.bag-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.bag-notice-dismiss {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  color: var(--faint);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bag-notice-dismiss:hover { color: var(--text); }
+
 .bag {
   margin-top: 26px;
   padding: 18px 20px;

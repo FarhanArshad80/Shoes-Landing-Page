@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const Star = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -77,27 +77,48 @@ function recallSystem() {
 // The bag is stored as US sizes and quantities and nothing else. Prices and
 // stock are read from `sizes` at render time, so a bag left in storage over
 // a price change or a restock cannot go on quoting the old numbers.
-function recallBag() {
+//
+// Bringing one back is also a reckoning with the shelf, and the shelf moves
+// while people are away. A pair that sold out in the meantime cannot be
+// honoured — but taking it out in silence means someone comes back to a bag
+// they did not leave, and the likeliest reading of that is that the site
+// lost it. So what changed is reported alongside what survived.
+function reconcileBag() {
+  const empty = { lines: [], gone: [], reduced: [] };
+
   try {
     const stored = JSON.parse(localStorage.getItem(BAG_KEY));
 
-    if (!Array.isArray(stored)) return [];
+    if (!Array.isArray(stored)) return empty;
 
-    return stored
-      .map((line) => ({ us: Number(line?.us), qty: Math.floor(Number(line?.qty)) }))
-      .filter((line) => {
-        const option = sizes.find((size) => size.us === line.us);
+    const lines = [];
+    const gone = [];
+    const reduced = [];
 
-        // A size that has since sold out, or been reduced below what is in
-        // the bag, is trimmed to what the shelf can actually honour.
-        return option && option.left > 0 && line.qty >= 1;
-      })
-      .map((line) => ({
-        ...line,
-        qty: Math.min(line.qty, sizes.find((size) => size.us === line.us).left),
-      }));
+    for (const entry of stored) {
+      const us = Number(entry?.us);
+      const qty = Math.floor(Number(entry?.qty));
+      const option = sizes.find((size) => size.us === us);
+
+      // A size the catalogue no longer lists at all is not news anybody can
+      // act on — there is nothing to point at and nothing to offer instead.
+      if (!option || !(qty >= 1)) continue;
+
+      if (option.left === 0) {
+        gone.push(us);
+        continue;
+      }
+
+      const kept = Math.min(qty, option.left);
+
+      if (kept < qty) reduced.push({ us, from: qty, to: kept });
+
+      lines.push({ us, qty: kept });
+    }
+
+    return { lines, gone, reduced };
   } catch (error) {
-    return [];
+    return empty;
   }
 }
 
@@ -111,6 +132,35 @@ function recallAlerts() {
   } catch (error) {
     return [];
   }
+}
+
+// One sentence about what the shelf did to the bag, or nothing at all. Sizes
+// are named in whichever system is on screen, because a shopper reading in EU
+// should not have to translate a warning about their own bag.
+function joinList(items) {
+  if (items.length <= 1) return items[0] || '';
+
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+function bagChangeText({ gone, reduced }, system) {
+  const named = (us) => sizeName(sizes.find((size) => size.us === us), system);
+  const parts = [];
+
+  // Sold-out sizes share their verb. Two of them spelled out separately
+  // reads as "US 10 sold out and US 12 sold out", which is a list pretending
+  // to be a sentence.
+  if (gone.length > 0) {
+    parts.push(`${joinList(gone.map(named))} sold out`);
+  }
+
+  for (const { us, to } of reduced) {
+    parts.push(`${named(us)} is down to ${to} pair${to === 1 ? '' : 's'}`);
+  }
+
+  if (parts.length === 0) return '';
+
+  return `While you were away, ${joinList(parts)}. Your bag has been updated.`;
 }
 
 function money(amount) {
@@ -201,7 +251,17 @@ const Hero = () => {
   const [size, setSize] = useState(null);
   const [added, setAdded] = useState(false);
   const [system, setSystem] = useState(recallSystem);
-  const [bag, setBag] = useState(recallBag);
+  // Read once, on the first render, because it is a snapshot of how the bag
+  // met the shelf at the moment this page opened — not something to redo
+  // every time the component re-renders.
+  const restored = useMemo(reconcileBag, []);
+  const [bag, setBag] = useState(restored.lines);
+  // Dismissible, and gone for good once dismissed: it describes something
+  // that happened before the visit started, so it should not outlive being
+  // read.
+  const [bagNotice, setBagNotice] = useState(
+    () => restored.gone.length > 0 || restored.reduced.length > 0
+  );
   const [alerts, setAlerts] = useState(recallAlerts);
   const [asking, setAsking] = useState(null);
   const [emptied, setEmptied] = useState(null);
@@ -638,6 +698,23 @@ const Hero = () => {
             </button>
             <button className="ghost">Browse Category</button>
           </div>
+
+          {/* Above the bag rather than inside it. A bag whose every line sold
+              out does not render at all, and that is exactly the case where
+              somebody most needs telling what happened to it. */}
+          {bagNotice && (
+            <p className="bag-notice" role="status">
+              {bagChangeText(restored, system)}
+              <button
+                type="button"
+                className="bag-notice-dismiss"
+                onClick={() => setBagNotice(false)}
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+            </p>
+          )}
 
           {bagCount > 0 && (
             <section className="bag" aria-label="Your bag">
