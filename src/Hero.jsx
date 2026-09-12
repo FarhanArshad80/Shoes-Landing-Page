@@ -53,6 +53,10 @@ const systems = ["US", "UK", "EU", "CM"];
 const SYSTEM_KEY = "landing.size-system";
 const BAG_KEY = "landing.bag";
 const ALERTS_KEY = "landing.restock-alerts";
+// The address the alerts go to. Kept apart from the list of sizes because it
+// belongs to the person rather than to any one size: watching a second size
+// is not a second decision about where to be emailed.
+const EMAIL_KEY = "landing.restock-email";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LOW_STOCK_AT = 2;
 // How long an emptied bag is held before it is really gone. Long enough to
@@ -131,6 +135,19 @@ function recallAlerts() {
     return Array.isArray(stored) ? stored.map(Number).filter(Number.isFinite) : [];
   } catch (error) {
     return [];
+  }
+}
+
+// Where those alerts should go. Validated on the way back out: a value left
+// by an older build, or edited by hand, should leave the field empty rather
+// than prefilling something that will be rejected the moment it is sent.
+function recallEmail() {
+  try {
+    const stored = localStorage.getItem(EMAIL_KEY);
+
+    return typeof stored === "string" && EMAIL_RE.test(stored) ? stored : "";
+  } catch (error) {
+    return "";
   }
 }
 
@@ -270,8 +287,19 @@ const Hero = () => {
   // case look like paperwork; the field is there for the people who know
   // their feet differ and want it accounted for.
   const [otherFoot, setOtherFoot] = useState("");
-  const [email, setEmail] = useState("");
+  // Prefilled from the last request. Asking a shopper to type the same
+  // address again for every sold-out size is the kind of friction that makes
+  // the second alert not worth the trouble of asking for.
+  const [email, setEmail] = useState(recallEmail);
   const [emailError, setEmailError] = useState("");
+  // The address the standing alerts are actually filed against, as opposed to
+  // whatever is currently in the box. They are the same thing until somebody
+  // starts editing, and the note has to keep naming the real one while they
+  // do.
+  const [alertEmail, setAlertEmail] = useState(recallEmail);
+  // Open when the shopper is changing where the alerts go, rather than asking
+  // for a new one. Same form, same validation, different question.
+  const [editingEmail, setEditingEmail] = useState(false);
 
   const selected = sizes.find((option) => option.us === size);
   const lowStock = selected && selected.left <= LOW_STOCK_AT;
@@ -367,24 +395,55 @@ const Hero = () => {
     }
 
     setAsking((current) => (current === us ? null : us));
+    setEditingEmail(false);
     setEmailError("");
+  };
+
+  const rememberEmail = (address) => {
+    setAlertEmail(address);
+
+    try {
+      localStorage.setItem(EMAIL_KEY, address);
+    } catch (error) {
+      /* storage unavailable — it just has to be typed again next visit */
+    }
   };
 
   const submitAlert = (event) => {
     event.preventDefault();
 
-    if (!EMAIL_RE.test(email.trim())) {
+    const address = email.trim();
+
+    if (!EMAIL_RE.test(address)) {
       setEmailError("That doesn't look like an email address.");
       return;
     }
 
+    rememberEmail(address);
+    setEmail(address);
+
     // Nothing is posted anywhere yet — this is the shape the request takes
     // once there is a backend to take it.
-    setAlerts((current) =>
-      current.includes(asking) ? current : [...current, asking]
-    );
+    //
+    // Changing the address is not a request for another size: every alert
+    // already standing moves to the new one, which is the whole reason the
+    // address is held apart from the list.
+    if (!editingEmail) {
+      setAlerts((current) =>
+        current.includes(asking) ? current : [...current, asking]
+      );
+    }
+
     setAsking(null);
+    setEditingEmail(false);
     setEmailError("");
+  };
+
+  const startEditingEmail = () => {
+    setAsking(null);
+    setEmail(alertEmail);
+    setEmailError("");
+    setEditingEmail(true);
   };
 
   const setQuantity = (us, next) => {
@@ -511,10 +570,12 @@ const Hero = () => {
               })}
             </div>
 
-            {askedSize && (
+            {(askedSize || editingEmail) && (
               <form className="restock" onSubmit={submitAlert}>
                 <label htmlFor="restock-email">
-                  {sizeName(askedSize, system)} is gone. Tell you when it's back?
+                  {editingEmail
+                    ? "Where should we send it?"
+                    : `${sizeName(askedSize, system)} is gone. Tell you when it's back?`}
                 </label>
 
                 <div className="restock-row">
@@ -531,7 +592,9 @@ const Hero = () => {
                     aria-invalid={Boolean(emailError)}
                     aria-describedby={emailError ? "restock-error" : undefined}
                   />
-                  <button type="submit">Notify me</button>
+                  <button type="submit">
+                    {editingEmail ? "Use this address" : "Notify me"}
+                  </button>
                 </div>
 
                 {emailError && (
@@ -671,7 +734,23 @@ const Hero = () => {
                     </span>
                   );
                 })}{" "}
-                {alerts.length > 1 ? "are" : "is"} back.
+                {alerts.length > 1 ? "are" : "is"} back
+                {alertEmail ? (
+                  <>
+                    {" at "}
+                    <button
+                      type="button"
+                      className="restock-address"
+                      onClick={startEditingEmail}
+                      title="Send these somewhere else"
+                    >
+                      {alertEmail}
+                    </button>
+                  </>
+                ) : (
+                  ""
+                )}
+                .
               </p>
             )}
           </fieldset>
