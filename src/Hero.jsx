@@ -51,6 +51,10 @@ const sizes = [
 
 const systems = ["US", "UK", "EU", "CM"];
 const SYSTEM_KEY = "landing.size-system";
+// The size picked last time. A person has one shoe size, and the system it
+// is written in was already remembered — asking them to find the same chip
+// again on every visit was the half of that job left undone.
+const SIZE_KEY = "landing.size";
 const BAG_KEY = "landing.bag";
 const ALERTS_KEY = "landing.restock-alerts";
 // The address the alerts go to. Kept apart from the list of sizes because it
@@ -135,6 +139,20 @@ function recallAlerts() {
     return Array.isArray(stored) ? stored.map(Number).filter(Number.isFinite) : [];
   } catch (error) {
     return [];
+  }
+}
+
+// Only a size that is still on the shelf comes back selected. Preselecting a
+// sold-out size would open the page on a disabled Add button, which reads as
+// the page being broken rather than the size being gone.
+function recallSize() {
+  try {
+    const stored = Number(localStorage.getItem(SIZE_KEY));
+    const option = sizes.find((item) => item.us === stored);
+
+    return option && option.left > 0 ? option.us : null;
+  } catch (error) {
+    return null;
   }
 }
 
@@ -265,7 +283,7 @@ const assurances = [
 ];
 
 const Hero = () => {
-  const [size, setSize] = useState(null);
+  const [size, setSize] = useState(recallSize);
   const [added, setAdded] = useState(false);
   const [system, setSystem] = useState(recallSystem);
   // Read once, on the first render, because it is a snapshot of how the bag
@@ -497,6 +515,18 @@ const Hero = () => {
     event.preventDefault();
     chips[next].focus();
   };
+
+  // Written whenever a size is chosen and never cleared: stepping away from
+  // the row is not a change of foot.
+  useEffect(() => {
+    if (size === null) return;
+
+    try {
+      localStorage.setItem(SIZE_KEY, String(size));
+    } catch (error) {
+      /* storage unavailable — the size just has to be picked again next time */
+    }
+  }, [size]);
 
   // Picking a different size means the previous confirmation is about a bag
   // that no longer reflects what is selected.
