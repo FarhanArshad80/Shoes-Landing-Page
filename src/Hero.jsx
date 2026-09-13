@@ -469,6 +469,35 @@ const Hero = () => {
     }
   };
 
+  // Ten sizes is ten Tab presses to get past, and twenty to get from the
+  // first to the last and back. Arrow keys move along the row the way they
+  // do in any toolbar, with Home and End for the ends.
+  //
+  // Focus moves; selection does not. Landing on a size is not choosing it -
+  // somebody reading the row by keyboard should be able to hear "US 9, 1
+  // left" without that becoming what goes in the bag.
+  const moveAlongSizes = (event) => {
+    const chips = Array.from(event.currentTarget.querySelectorAll(".size-chip"));
+    const at = chips.indexOf(document.activeElement);
+
+    if (at === -1) return;
+
+    const next = {
+      ArrowRight: Math.min(at + 1, chips.length - 1),
+      ArrowDown: Math.min(at + 1, chips.length - 1),
+      ArrowLeft: Math.max(at - 1, 0),
+      ArrowUp: Math.max(at - 1, 0),
+      Home: 0,
+      End: chips.length - 1,
+    }[event.key];
+
+    if (next === undefined) return;
+
+    // The page would otherwise scroll on the up and down arrows.
+    event.preventDefault();
+    chips[next].focus();
+  };
+
   // Picking a different size means the previous confirmation is about a bag
   // that no longer reflects what is selected.
   useEffect(() => {
@@ -538,7 +567,7 @@ const Hero = () => {
               </span>
             </legend>
 
-            <div className="size-row">
+            <div className="size-row" onKeyDown={moveAlongSizes}>
               {sizes.map((option) => {
                 const { us, left } = option;
                 const soldOut = left === 0;
