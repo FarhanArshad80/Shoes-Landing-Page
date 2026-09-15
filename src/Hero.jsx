@@ -169,6 +169,58 @@ function rememberSizeInUrl(us) {
   }
 }
 
+// A bag written by another tab, read back the same way the stored one is.
+//
+// Two tabs open on the same shop is not an unusual way to shop — one for the
+// pair, one for the review somebody was reading about it — and until now the
+// second tab was quietly destructive. Each holds its own copy of the bag in
+// memory and writes the whole thing out on every change, so adding US 9 in
+// one tab and then US 10 in the other left a bag holding only US 10: the
+// second tab never knew about the first one's pair and overwrote it.
+//
+// Ids and quantities only, like everything else stored here. Prices and
+// stock are read from the shelf at render time, so a bag arriving from
+// another tab cannot bring old numbers with it.
+function readStoredBag(raw) {
+  try {
+    const stored = JSON.parse(raw);
+
+    if (!Array.isArray(stored)) return [];
+
+    const lines = [];
+
+    for (const entry of stored) {
+      const us = Number(entry?.us);
+      const qty = Math.floor(Number(entry?.qty));
+      const option = sizes.find((size) => size.us === us);
+
+      // A size that has sold out since the other tab wrote it drops out
+      // rather than becoming a line of nothing. The reconciliation on load
+      // says so out loud because it is news about a bag left overnight;
+      // here it is the shelf agreeing with itself between two windows open
+      // at the same moment, and there is nothing to announce.
+      if (!option || option.left === 0 || !(qty >= 1)) continue;
+
+      lines.push({ us, qty: Math.min(qty, option.left) });
+    }
+
+    return lines;
+  } catch (error) {
+    return [];
+  }
+}
+
+// Whether two bags say the same thing. Compared rather than simply adopted,
+// so a tab that hears its own change echoed back does not re-render and
+// re-write it — which is what turns two synchronised tabs into two tabs
+// writing to each other for ever.
+function sameBag(left, right) {
+  return (
+    left.length === right.length &&
+    left.every((line, index) => line.us === right[index].us && line.qty === right[index].qty)
+  );
+}
+
 // Which sold-out sizes this visitor has already asked to hear about. Kept as
 // US sizes so the list survives switching between UK, EU and CM.
 function recallAlerts() {
@@ -605,6 +657,66 @@ const Hero = () => {
       /* storage unavailable — the size just has to be picked again next time */
     }
   }, [size]);
+
+  // What the other tabs are doing.
+  //
+  // `storage` only fires in the tabs that did not write, which is exactly
+  // the set that needs telling. Adopting the stored value rather than
+  // merging it is right because the tab that wrote it had already adopted
+  // everything before it — the last write is the whole bag as it stood a
+  // moment ago, not one tab's half of it.
+  //
+  // Nothing is announced. The change came from the same person seconds ago
+  // in a window they can see, and the bag panel shows its own contents; a
+  // banner explaining somebody's own click back to them is noise.
+  useEffect(() => {
+    const onStorage = (event) => {
+      // A null key means storage was cleared wholesale, which is not
+      // something this page asked for and not something it should act on.
+      if (event.key === null) return;
+
+      if (event.key === BAG_KEY) {
+        // A removed key is an empty bag, not a reason to keep the old one.
+        const next = event.newValue === null ? [] : readStoredBag(event.newValue);
+
+        setBag((current) => (sameBag(current, next) ? current : next));
+        // The pending undo refers to a bag that is no longer the bag, and
+        // restoring it would put another tab's work back the way this one
+        // last saw it.
+        setEmptied(null);
+        return;
+      }
+
+      // The standing restock requests have the same problem and the same
+      // fix: one list, held in two places, written out whole.
+      if (event.key === ALERTS_KEY) {
+        const next =
+          event.newValue === null
+            ? []
+            : (() => {
+                try {
+                  const stored = JSON.parse(event.newValue);
+
+                  return Array.isArray(stored)
+                    ? stored.map(Number).filter(Number.isFinite)
+                    : [];
+                } catch (error) {
+                  return [];
+                }
+              })();
+
+        setAlerts((current) =>
+          current.length === next.length && current.every((us, i) => us === next[i])
+            ? current
+            : next
+        );
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   // And into the address, so the link in the bar is always the link worth
   // sending. Runs on the opening size too, which is what makes a page opened
