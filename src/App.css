@@ -459,6 +459,31 @@
   color: var(--text);
 }
 
+/* Quieter than the system buttons it sits beside: those are a choice being
+   made about the page, this only offers to carry the page elsewhere. */
+.size-share {
+  margin-left: auto;
+  padding: 3px 9px;
+  border: 1px solid var(--glass-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--faint);
+  font: inherit;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color 0.25s var(--ease),
+    color 0.25s var(--ease);
+}
+
+.size-share:hover,
+.size-share:focus-visible {
+  border-color: var(--text);
+  color: var(--text);
+}
+
 .size-row {
   display: flex;
   flex-wrap: wrap;

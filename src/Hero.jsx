@@ -130,6 +130,45 @@ function reconcileBag() {
   }
 }
 
+// The size named in the address, if there is one this shelf actually holds.
+//
+// "Have a look at these" is the most natural thing anybody sends from a
+// product page, and until now the link carried the shoe but not the size —
+// so the recipient landed on whichever size the sender's own browser
+// happened to remember about them, which is a strange thing for a link to
+// say.
+//
+// Always US, whatever the sender was reading in. It is the system the bag
+// and the alerts are already keyed on, and it means a link sent from Berlin
+// opens correctly for somebody who reads in UK.
+const SIZE_PARAM = "size";
+
+function sizeFromUrl() {
+  try {
+    const asked = Number(new URLSearchParams(window.location.search).get(SIZE_PARAM));
+
+    return sizes.some((option) => option.us === asked) ? asked : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Writes the selected size into the address so the link in the bar is always
+// the link worth sending. replaceState rather than pushState: trying on four
+// sizes is one visit to one page, not four entries to press Back through.
+function rememberSizeInUrl(us) {
+  try {
+    const url = new URL(window.location.href);
+
+    if (us) url.searchParams.set(SIZE_PARAM, String(us));
+    else url.searchParams.delete(SIZE_PARAM);
+
+    window.history.replaceState(null, "", url.toString());
+  } catch (error) {
+    /* history unavailable — the page still works, the link is just plainer */
+  }
+}
+
 // Which sold-out sizes this visitor has already asked to hear about. Kept as
 // US sizes so the list survives switching between UK, EU and CM.
 function recallAlerts() {
@@ -146,6 +185,20 @@ function recallAlerts() {
 // sold-out size would open the page on a disabled Add button, which reads as
 // the page being broken rather than the size being gone.
 function recallSize() {
+  // A link naming a size outranks the one this browser remembers, and is
+  // honoured even when the shelf has since emptied.
+  //
+  // The rule below — never preselect a sold-out size — is about a guess the
+  // page is making about you, where opening on a disabled Add button reads
+  // as the page being broken. A link is not a guess: somebody asked for that
+  // size specifically, and the page has a real answer for it, which is that
+  // it is gone and here is where to be told when it is back. Quietly opening
+  // on a different size would tell the recipient that the other one was what
+  // was sent.
+  const asked = sizeFromUrl();
+
+  if (asked !== null) return asked;
+
   try {
     const stored = Number(localStorage.getItem(SIZE_KEY));
     const option = sizes.find((item) => item.us === stored);
@@ -300,6 +353,9 @@ const Hero = () => {
   const [alerts, setAlerts] = useState(recallAlerts);
   const [asking, setAsking] = useState(null);
   const [emptied, setEmptied] = useState(null);
+  // "Copied" is a confirmation, not a state worth keeping — it clears itself
+  // a moment later.
+  const [copiedLink, setCopiedLink] = useState(false);
   const [foot, setFoot] = useState("");
   // Optional, and second. Asking for two numbers up front makes the simple
   // case look like paperwork; the field is there for the people who know
@@ -516,6 +572,28 @@ const Hero = () => {
     chips[next].focus();
   };
 
+  useEffect(() => {
+    if (!copiedLink) return undefined;
+
+    const timer = setTimeout(() => setCopiedLink(false), 2000);
+
+    return () => clearTimeout(timer);
+  }, [copiedLink]);
+
+  // The clipboard can be refused outright — an insecure context, a denied
+  // permission. The link is in the address bar either way, so that case hands
+  // it over to be copied by hand rather than reporting a failure.
+  const copySizeLink = async () => {
+    const link = window.location.href;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedLink(true);
+    } catch (error) {
+      window.prompt("Copy this link:", link);
+    }
+  };
+
   // Written whenever a size is chosen and never cleared: stepping away from
   // the row is not a change of foot.
   useEffect(() => {
@@ -526,6 +604,13 @@ const Hero = () => {
     } catch (error) {
       /* storage unavailable — the size just has to be picked again next time */
     }
+  }, [size]);
+
+  // And into the address, so the link in the bar is always the link worth
+  // sending. Runs on the opening size too, which is what makes a page opened
+  // from a remembered size shareable without touching anything.
+  useEffect(() => {
+    rememberSizeInUrl(size);
   }, [size]);
 
   // Picking a different size means the previous confirmation is about a bag
@@ -595,6 +680,22 @@ const Hero = () => {
                   </button>
                 ))}
               </span>
+
+              {/* Beside the systems rather than down by the bag: what is
+                  being sent is this pair in this size, and this is the row
+                  where the size is chosen. Only once one is picked — a link
+                  to no size in particular is the page's own address, which
+                  anybody can already copy from the bar. */}
+              {size !== null && (
+                <button
+                  type="button"
+                  className="size-share"
+                  onClick={copySizeLink}
+                  title={`Copy a link to ${sizeName(selected, system)}`}
+                >
+                  {copiedLink ? "Copied" : "Share"}
+                </button>
+              )}
             </legend>
 
             <div className="size-row" onKeyDown={moveAlongSizes}>
