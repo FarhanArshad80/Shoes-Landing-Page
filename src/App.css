@@ -926,9 +926,10 @@
   gap: 10px;
 }
 
+/* Size, quantity, price, save, remove. */
 .bag-line {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: 1fr auto auto auto auto;
   align-items: center;
   gap: 12px;
   padding-bottom: 10px;
@@ -1006,6 +1007,119 @@
   color: var(--accent);
 }
 
+/* ---------- Saved for later ---------- */
+
+/* Deliberately quieter than the bag above it — no glass, no blur, a plain
+   rule across the top. These are pairs nobody has committed to, and a panel
+   competing with the bag for attention would suggest otherwise. */
+.saved {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.saved-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.saved-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--pill);
+  border: 1px solid var(--line);
+  color: var(--faint);
+  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.saved-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.saved-line {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.saved-size {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.saved-qty {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+}
+
+.bag-save,
+.saved-restore,
+.saved-watch {
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  padding: 4px 11px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.bag-save:hover,
+.saved-restore:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* A size that sold out while it was set aside is the one line here with
+   news on it, so it carries the accent the rest of the list does not. */
+.saved-watch {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.saved-watch:hover {
+  color: var(--text);
+}
+
+.saved-remove {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--pill);
+  background: transparent;
+  color: var(--faint);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.saved-remove:hover {
+  background: rgba(255, 45, 45, 0.14);
+  color: var(--accent);
+}
+
 .bag-foot {
   display: flex;
   align-items: baseline;
@@ -1072,9 +1186,12 @@
 }
 
 @media (max-width: 480px) {
+  /* Save moves down beside the price rather than squeezing a fifth column
+     onto a phone — it is a word, not an icon, and it is the one control here
+     that can afford the second row. */
   .bag-line {
     grid-template-columns: 1fr auto auto;
-    grid-template-areas: "size qty remove" "price price price";
+    grid-template-areas: "size qty remove" "price save save";
     row-gap: 6px;
   }
 
@@ -1082,6 +1199,7 @@
   .bag-qty { grid-area: qty; }
   .bag-remove { grid-area: remove; }
   .bag-price { grid-area: price; }
+  .bag-save { grid-area: save; justify-self: end; }
 }
 
 .trust-info {

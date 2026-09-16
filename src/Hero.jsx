@@ -56,6 +56,11 @@ const SYSTEM_KEY = "landing.size-system";
 // again on every visit was the half of that job left undone.
 const SIZE_KEY = "landing.size";
 const BAG_KEY = "landing.bag";
+// Sizes set aside rather than given up on. Kept apart from the bag because
+// they are answers to different questions — the bag is what is being bought,
+// this is what is still being thought about — and mixing them would make the
+// subtotal quote a number nobody agreed to.
+const SAVED_KEY = "landing.saved";
 const ALERTS_KEY = "landing.restock-alerts";
 // The address the alerts go to. Kept apart from the list of sizes because it
 // belongs to the person rather than to any one size: watching a second size
@@ -219,6 +224,40 @@ function sameBag(left, right) {
     left.length === right.length &&
     left.every((line, index) => line.us === right[index].us && line.qty === right[index].qty)
   );
+}
+
+// The sizes set aside for later, read back the same way the bag is: ids and
+// quantities, with prices and stock left to the shelf.
+//
+// Unlike the bag, a size that has sold out stays on this list. The bag is a
+// promise the shop cannot keep for a pair it does not have, so the line has
+// to go and be accounted for. Setting something aside is not a promise — it
+// is a note that this was interesting — and a note about a size that has
+// since gone is worth more than one about a size still sitting there, because
+// it is the one that now needs a restock alert rather than a decision.
+function recallSaved() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(SAVED_KEY));
+
+    if (!Array.isArray(stored)) return [];
+
+    const lines = [];
+
+    for (const entry of stored) {
+      const us = Number(entry?.us);
+      const qty = Math.floor(Number(entry?.qty));
+      const option = sizes.find((size) => size.us === us);
+
+      // A size the catalogue no longer lists at all has nothing to point at.
+      if (!option || !(qty >= 1)) continue;
+
+      lines.push({ us, qty });
+    }
+
+    return lines;
+  } catch (error) {
+    return [];
+  }
 }
 
 // Which sold-out sizes this visitor has already asked to hear about. Kept as
@@ -402,6 +441,7 @@ const Hero = () => {
   const [bagNotice, setBagNotice] = useState(
     () => restored.gone.length > 0 || restored.reduced.length > 0
   );
+  const [saved, setSaved] = useState(recallSaved);
   const [alerts, setAlerts] = useState(recallAlerts);
   const [asking, setAsking] = useState(null);
   const [emptied, setEmptied] = useState(null);
@@ -448,11 +488,66 @@ const Hero = () => {
 
   useEffect(() => {
     try {
+      localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
+    } catch (error) {
+      /* storage unavailable — the shortlist just will not survive a reload */
+    }
+  }, [saved]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem(ALERTS_KEY, JSON.stringify(alerts));
     } catch (error) {
       /* storage unavailable — the request just will not be remembered here */
     }
   }, [alerts]);
+
+  // Out of the bag and onto the list. The quantity travels with it, because
+  // somebody who put two in the bag was thinking about two.
+  const saveForLater = (us) => {
+    const line = bag.find((entry) => entry.us === us);
+
+    if (!line) return;
+
+    setSaved((current) => {
+      const already = current.find((entry) => entry.us === us);
+
+      // Setting the same size aside twice is one decision, not two lines.
+      return already
+        ? current.map((entry) =>
+            entry.us === us ? { ...entry, qty: entry.qty + line.qty } : entry
+          )
+        : [...current, { us, qty: line.qty }];
+    });
+
+    setQuantity(us, 0);
+  };
+
+  const forgetSaved = (us) => {
+    setSaved((current) => current.filter((entry) => entry.us !== us));
+  };
+
+  // And back again, against the shelf as it stands now rather than as it
+  // stood when the size was set aside. A pair saved last week may have three
+  // left today and two of them already in the bag.
+  const moveToBag = (us) => {
+    const option = sizes.find((item) => item.us === us);
+    const line = saved.find((entry) => entry.us === us);
+
+    if (!option || !line || option.left === 0) return;
+
+    setBag((current) => {
+      const already = current.find((entry) => entry.us === us);
+      const wanted = (already?.qty || 0) + line.qty;
+      const capped = Math.min(wanted, option.left);
+
+      return already
+        ? current.map((entry) => (entry.us === us ? { ...entry, qty: capped } : entry))
+        : [...current, { us, qty: capped }];
+    });
+
+    forgetSaved(us);
+  };
 
   // Emptying the bag was one click and final. The lines are kept aside for a
   // few seconds instead, so a mis-click costs a click back rather than
@@ -684,6 +779,42 @@ const Hero = () => {
         // restoring it would put another tab's work back the way this one
         // last saw it.
         setEmptied(null);
+        return;
+      }
+
+      // The set-aside list has exactly the bag's problem — one list, two
+      // tabs, each writing it out whole — so it takes the same fix. Read
+      // back through its own loader rather than the bag's, because this list
+      // is allowed to hold sold-out sizes and the bag's is not.
+      if (event.key === SAVED_KEY) {
+        const next =
+          event.newValue === null
+            ? []
+            : (() => {
+                try {
+                  const stored = JSON.parse(event.newValue);
+
+                  if (!Array.isArray(stored)) return [];
+
+                  return stored
+                    .map((entry) => ({
+                      us: Number(entry?.us),
+                      qty: Math.floor(Number(entry?.qty)),
+                    }))
+                    .filter(
+                      (entry) =>
+                        entry.qty >= 1 &&
+                        sizes.some((size) => size.us === entry.us)
+                    );
+                } catch (error) {
+                  return [];
+                }
+              })();
+
+        // Same structural check the bag uses — these lists are the same
+        // shape — so a tab hearing its own write echoed back does not
+        // re-render and write it out again.
+        setSaved((current) => (sameBag(current, next) ? current : next));
         return;
       }
 
@@ -1113,6 +1244,19 @@ const Hero = () => {
 
                       <span className="bag-price">{money(line.qty * PRICE)}</span>
 
+                      {/* Between keeping it and losing it. Taking a size out
+                          of the bag was the only way to stop it counting
+                          toward the total, and it threw the decision away
+                          with the line. */}
+                      <button
+                        type="button"
+                        className="bag-save"
+                        onClick={() => saveForLater(line.us)}
+                        aria-label={`Save ${name} for later`}
+                      >
+                        Save
+                      </button>
+
                       <button
                         type="button"
                         className="bag-remove"
@@ -1149,6 +1293,76 @@ const Hero = () => {
                 Undo
               </button>
             </p>
+          )}
+
+          {/* Below the bag, and outside it: these are not being bought. The
+              subtotal above must go on meaning what it says. */}
+          {saved.length > 0 && (
+            <section className="saved" aria-label="Saved for later">
+              <header className="saved-head">
+                <h2>
+                  Saved for later
+                  <span className="saved-count">{saved.length}</span>
+                </h2>
+              </header>
+
+              <ul className="saved-lines">
+                {saved.map((line) => {
+                  const option = sizes.find((item) => item.us === line.us);
+                  const name = sizeName(option, system);
+                  const soldOut = option.left === 0;
+                  const watching = alerts.includes(line.us);
+
+                  return (
+                    <li className="saved-line" key={line.us}>
+                      <span className="saved-size">
+                        {name}
+                        {line.qty > 1 && (
+                          <span className="saved-qty">&times;{line.qty}</span>
+                        )}
+                      </span>
+
+                      {/* A size that went while it was set aside is the whole
+                          reason this list keeps sold-out pairs. There is
+                          nothing to move to the bag, but there is still the
+                          one thing worth doing with it. */}
+                      {soldOut ? (
+                        <button
+                          type="button"
+                          className="saved-watch"
+                          onClick={() => handleGone(line.us)}
+                          aria-label={
+                            watching
+                              ? `Stop watching ${name}`
+                              : `Email me when ${name} is back`
+                          }
+                        >
+                          {watching ? "Watching" : "Sold out — tell me"}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="saved-restore"
+                          onClick={() => moveToBag(line.us)}
+                          aria-label={`Move ${name} back to your bag`}
+                        >
+                          Move to bag
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="saved-remove"
+                        onClick={() => forgetSaved(line.us)}
+                        aria-label={`Remove ${name} from saved`}
+                      >
+                        &times;
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           )}
 
           <div className="trust-info">
