@@ -1602,3 +1602,13 @@
     border-top: 0;
   }
 }
+
+/* Under the shipping line it explains. Quieter than the subtotal above,
+   because a date is a fact to check rather than a number to decide on. */
+.bag-delivery {
+  display: block;
+  margin-top: 6px;
+  color: var(--faint);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}

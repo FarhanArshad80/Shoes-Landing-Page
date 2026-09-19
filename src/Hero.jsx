@@ -75,6 +75,79 @@ const UNDO_SECONDS = 8;
 const PRICE = 189;
 const FREE_SHIPPING_AT = 150;
 
+// When the warehouse stops packing for the day, in the shopper's own clock —
+// which is a simplification, and the honest one for a page that does not
+// know where they are. It is local either way to the only person reading it.
+const DISPATCH_HOUR = 16;
+// Working days from dispatch, express and standard. Two numbers rather than
+// one, because "free express shipping" is offered a few lines above and a
+// single estimate would quietly quote the wrong one.
+const EXPRESS_DAYS = 2;
+const STANDARD_DAYS = 5;
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Whether today's orders still make today's van.
+function packsToday(now = new Date()) {
+  const day = now.getDay();
+
+  // Nobody packs at the weekend, so a Saturday order is Monday's work
+  // however early it is placed.
+  if (day === 0 || day === 6) return false;
+
+  return now.getHours() < DISPATCH_HOUR;
+}
+
+// How long is left to get in today's van, said the way somebody would say it
+// out loud. Under an hour it becomes minutes, because "in 0 hours" is not a
+// deadline and the last hour is the one that actually hurries anybody.
+function timeLeftToPack(now = new Date()) {
+  const minutes = (DISPATCH_HOUR - now.getHours()) * 60 - now.getMinutes();
+
+  if (minutes <= 0) return '';
+  if (minutes < 60) return `${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+
+  return rest === 0 ? `${hours} hr` : `${hours} hr ${rest} min`;
+}
+
+// A date that many working days after dispatch. Weekends are skipped rather
+// than counted, which is what "working days" means and what nobody wants to
+// work out from a delivery promise themselves.
+function workingDaysFrom(start, count) {
+  const date = new Date(start);
+  let left = count;
+
+  while (left > 0) {
+    date.setDate(date.getDate() + 1);
+
+    if (date.getDay() !== 0 && date.getDay() !== 6) left -= 1;
+  }
+
+  return date;
+}
+
+// "Thursday 24 Sep". No year: nothing here is ever more than a fortnight
+// out, and a year on a delivery date reads like a warning.
+function deliveryText(now, days) {
+  const from = new Date(now);
+
+  // Missed today's van, so the clock starts on the next day anything is
+  // packed at all.
+  if (!packsToday(now)) {
+    do {
+      from.setDate(from.getDate() + 1);
+    } while (from.getDay() === 0 || from.getDay() === 6);
+  }
+
+  const date = workingDaysFrom(from, days);
+
+  return `${DAY_NAMES[date.getDay()]} ${date.getDate()} ${
+    ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()]
+  }`;
+}
+
 // Someone shopping from Berlin should not have to convert in their head, and
 // should not have to convert again on their next visit either.
 function recallSystem() {
@@ -1279,6 +1352,28 @@ const Hero = () => {
                   {subtotal >= FREE_SHIPPING_AT
                     ? "Free express shipping included"
                     : `${money(FREE_SHIPPING_AT - subtotal)} away from free express shipping`}
+                </span>
+
+                {/* What the line above is actually promising. "Free express
+                    shipping" is a price, not a date, and the date is the half
+                    anybody buying shoes for an occasion needs. It follows the
+                    subtotal, so crossing the threshold changes the day it
+                    names rather than only the words. */}
+                <span className="bag-delivery">
+                  {(() => {
+                    // Read as the bag renders rather than held in state and
+                    // ticked down. It only has to be right at the moment
+                    // somebody is reading it, and a live countdown in a
+                    // shopping bag is a pressure tactic, not information.
+                    const now = new Date();
+                    const express = subtotal >= FREE_SHIPPING_AT;
+                    const arrives = deliveryText(now, express ? EXPRESS_DAYS : STANDARD_DAYS);
+                    const left = packsToday(now) ? timeLeftToPack(now) : '';
+
+                    return left
+                      ? `Order in the next ${left} and it arrives by ${arrives}`
+                      : `Arrives by ${arrives}`;
+                  })()}
                 </span>
               </footer>
             </section>
