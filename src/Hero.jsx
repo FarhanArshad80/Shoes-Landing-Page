@@ -68,9 +68,9 @@ const ALERTS_KEY = "landing.restock-alerts";
 const EMAIL_KEY = "landing.restock-email";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LOW_STOCK_AT = 2;
-// How long an emptied bag is held before it is really gone. Long enough to
-// notice the mistake and reach for the button, short enough that the banner
-// is not still sitting there once the page has moved on.
+// How long the bag as it was is held before it is really gone. Long enough
+// to notice the mistake and reach for the button, short enough that the
+// banner is not still sitting there once the page has moved on.
 const UNDO_SECONDS = 8;
 const PRICE = 189;
 const FREE_SHIPPING_AT = 150;
@@ -517,7 +517,11 @@ const Hero = () => {
   const [saved, setSaved] = useState(recallSaved);
   const [alerts, setAlerts] = useState(recallAlerts);
   const [asking, setAsking] = useState(null);
-  const [emptied, setEmptied] = useState(null);
+  // The bag as it was, plus what was done to it. One record rather than one
+  // per kind of removal: whichever way a size left the bag, putting it back
+  // means the same thing, and two banners that can both be on screen at once
+  // would only disagree about which mistake is being offered back.
+  const [undo, setUndo] = useState(null);
   // "Copied" is a confirmation, not a state worth keeping — it clears itself
   // a moment later.
   const [copiedLink, setCopiedLink] = useState(false);
@@ -593,7 +597,11 @@ const Hero = () => {
         : [...current, { us, qty: line.qty }];
     });
 
-    setQuantity(us, 0);
+    // Dropped straight rather than through setQuantity, which now treats
+    // reaching nothing as something to offer back. Nothing was lost here —
+    // the size is on the page, one section down — and a banner saying it
+    // could be undone would be describing a mistake nobody made.
+    changeBag((current) => current.filter((entry) => entry.us !== us));
   };
 
   const forgetSaved = (us) => {
@@ -609,7 +617,7 @@ const Hero = () => {
 
     if (!option || !line || option.left === 0) return;
 
-    setBag((current) => {
+    changeBag((current) => {
       const already = current.find((entry) => entry.us === us);
       const wanted = (already?.qty || 0) + line.qty;
       const capped = Math.min(wanted, option.left);
@@ -628,24 +636,24 @@ const Hero = () => {
   const emptyBag = () => {
     if (bag.length === 0) return;
 
-    setEmptied(bag);
+    setUndo({ lines: bag, text: "Bag emptied." });
     setBag([]);
   };
 
-  const undoEmpty = () => {
-    if (!emptied) return;
+  const undoRemoval = () => {
+    if (!undo) return;
 
-    setBag(emptied);
-    setEmptied(null);
+    setBag(undo.lines);
+    setUndo(null);
   };
 
   useEffect(() => {
-    if (!emptied) return;
+    if (!undo) return;
 
-    const timer = setTimeout(() => setEmptied(null), UNDO_SECONDS * 1000);
+    const timer = setTimeout(() => setUndo(null), UNDO_SECONDS * 1000);
 
     return () => clearTimeout(timer);
-  }, [emptied]);
+  }, [undo]);
 
   const askedSize = sizes.find((option) => option.us === asking);
 
@@ -740,14 +748,34 @@ const Hero = () => {
     setEditingEmail(true);
   };
 
+  // Every change to the bag that is not itself a removal goes through here.
+  // A pending undo describes the bag as it stood before one particular
+  // mistake; the moment anything else is added, moved or counted, putting
+  // that bag back would throw away the newer work instead of the mistake.
+  const changeBag = (update) => {
+    setUndo(null);
+    setBag(update);
+  };
+
   const setQuantity = (us, next) => {
     const option = sizes.find((item) => item.us === us);
     const capped = Math.min(Math.max(next, 0), option ? option.left : 0);
 
-    setBag((current) =>
-      capped === 0
-        ? current.filter((line) => line.us !== us)
-        : current.map((line) => (line.us === us ? { ...line, qty: capped } : line))
+    // Dropping to nothing is a removal however it was reached — the cross,
+    // or the minus pressed once more than intended — and both lose a size
+    // that took a decision to pick. The bag is kept as it stood, so the line
+    // comes back where it was rather than on the end.
+    if (capped === 0) {
+      setUndo({ lines: bag, text: `${sizeName(option, system)} removed.` });
+    }
+
+    if (capped === 0) {
+      setBag((current) => current.filter((line) => line.us !== us));
+      return;
+    }
+
+    changeBag((current) =>
+      current.map((line) => (line.us === us ? { ...line, qty: capped } : line))
     );
   };
 
@@ -848,10 +876,11 @@ const Hero = () => {
         const next = event.newValue === null ? [] : readStoredBag(event.newValue);
 
         setBag((current) => (sameBag(current, next) ? current : next));
-        // The pending undo refers to a bag that is no longer the bag, and
-        // restoring it would put another tab's work back the way this one
-        // last saw it.
-        setEmptied(null);
+        // Not through changeBag, which is for this tab's own edits. The
+        // pending undo describes a bag another tab has since replaced, and
+        // restoring it would put this window's older idea of the bag back
+        // over their work.
+        setUndo(null);
         return;
       }
 
@@ -941,11 +970,7 @@ const Hero = () => {
   const handleShop = () => {
     if (!selected || atLimit) return;
 
-    // Starting a new bag is a decision about the old one: restoring it now
-    // would silently swallow the pair just added.
-    setEmptied(null);
-
-    setBag((current) =>
+    changeBag((current) =>
       current.some((line) => line.us === selected.us)
         ? current.map((line) =>
             line.us === selected.us ? { ...line, qty: line.qty + 1 } : line
@@ -1379,12 +1404,13 @@ const Hero = () => {
             </section>
           )}
 
-          {/* Outside the bag on purpose — by the time this shows there is no
-              bag left to hang it off. */}
-          {emptied && (
+          {/* Outside the bag on purpose. An emptied bag leaves nothing to
+              hang this off, and a removed line leaves a bag that is about to
+              be rearranged under it. Below both, it stays in one place. */}
+          {undo && (
             <p className="bag-undo" role="status">
-              Bag emptied.
-              <button type="button" onClick={undoEmpty}>
+              {undo.text}
+              <button type="button" onClick={undoRemoval}>
                 Undo
               </button>
             </p>
