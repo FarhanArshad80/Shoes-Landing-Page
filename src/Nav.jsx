@@ -67,6 +67,14 @@ const SearchIcon = () => (
   </svg>
 );
 
+const BagIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 8h14l-1 12H6L5 8Z" />
+    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+  </svg>
+);
+
 const MenuIcon = ({ open }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
        strokeLinecap="round" aria-hidden="true">
@@ -85,6 +93,15 @@ const Nav = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeResult, setActiveResult] = useState(-1);
   const [recent, setRecent] = useState(recallSearches);
+  // What is in the bag, announced by the bag itself. The header is sticky
+  // and the bag is most of a page further down, so scrolling past it meant
+  // losing sight of a decision already made — and there was no way back to
+  // it except scrolling until it reappeared.
+  //
+  // Nothing is read from storage here. The bag is reconciled against the
+  // shelf when the page loads, and a count read independently would spend
+  // the first moments of every visit quoting pairs that had sold out.
+  const [bagCount, setBagCount] = useState(0);
   const menuBtnRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -193,6 +210,15 @@ const Nav = () => {
 
   // Arrow keys walk the list, Enter takes the highlighted pair, Escape backs
   // out one step at a time — panel first, then the term itself.
+  useEffect(() => {
+    const read = (event) =>
+      setBagCount(Number.isFinite(event.detail) ? Math.max(0, event.detail) : 0);
+
+    window.addEventListener("bag:count", read);
+
+    return () => window.removeEventListener("bag:count", read);
+  }, []);
+
   const handleSearchKeyDown = (event) => {
     if (event.key === "Escape") {
       event.stopPropagation();
@@ -346,6 +372,30 @@ const Nav = () => {
               </ul>
             )}
           </div>
+
+          {/* Present whether or not anything is in it, so the row does not
+              rearrange itself under the cursor the moment a pair is added.
+              Empty, it is a button with nothing to go to and says so. */}
+          <button
+            type="button"
+            className={bagCount > 0 ? "bag-btn has-items" : "bag-btn"}
+            disabled={bagCount === 0}
+            onClick={() => {
+              document.getElementById("bag")?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }}
+            aria-label={
+              bagCount === 0
+                ? "Your bag is empty"
+                : `Your bag — ${bagCount} ${bagCount === 1 ? "pair" : "pairs"}`
+            }
+            title={bagCount === 0 ? "Your bag is empty" : "Go to your bag"}
+          >
+            <BagIcon />
+            {bagCount > 0 && <span className="bag-btn-count">{bagCount}</span>}
+          </button>
 
           <button className="login-btn">Login</button>
 

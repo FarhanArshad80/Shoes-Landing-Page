@@ -245,6 +245,62 @@
   transform: translateY(-1px);
 }
 
+/* The bag, in the one bar that is always on screen. Same size and shape as
+   the menu button beside it, so the row reads as a set of actions rather
+   than as a control that wandered in from the page below. */
+.bag-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  background: var(--glass);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+
+.bag-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.bag-btn:hover:not(:disabled) {
+  background: var(--glass-strong);
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+/* Dimmed rather than removed: an empty bag is a fact about the bag, and a
+   button that appears the moment something is added would shift the two
+   controls next to it under the cursor. */
+.bag-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.bag-btn.has-items {
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+/* On the rim of the button, where every shop in the world puts it. */
+.bag-btn-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--pill);
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
 .menu-btn {
   display: none;
   place-items: center;

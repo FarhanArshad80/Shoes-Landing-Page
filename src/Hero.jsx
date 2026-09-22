@@ -563,6 +563,15 @@ const Hero = () => {
     }
   }, [bag]);
 
+  // The header is a sibling of this component and has no way to ask what is
+  // in the bag, so the bag says so instead. An event rather than lifted
+  // state or a context: the count is the only thing outside this component
+  // has any business knowing, and everything that decides it — the shelf,
+  // the reconciliation, the undo — stays here where it already is.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("bag:count", { detail: bagCount }));
+  }, [bagCount]);
+
   useEffect(() => {
     try {
       localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
@@ -1297,7 +1306,7 @@ const Hero = () => {
           )}
 
           {bagCount > 0 && (
-            <section className="bag" aria-label="Your bag">
+            <section className="bag" id="bag" aria-label="Your bag">
               <header className="bag-head">
                 <h2>
                   Your bag
