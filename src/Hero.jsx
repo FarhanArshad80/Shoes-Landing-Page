@@ -1121,6 +1121,73 @@ const Hero = () => {
                 : `${sizeName(selected, system)} in stock, ships today.`}
             </p>
 
+            {/* Every system at once, which is the one thing the row of chips
+                above cannot show: it speaks whichever was last chosen, so
+                somebody who knows their size in EU and is buying from a page
+                set to US had to flip the toggle and compare chips one at a
+                time to read across.
+
+                The columns already exist — each size carries its UK, EU and
+                CM equivalents, written out rather than derived, because the
+                jumps are not even. This lays them side by side. */}
+            <details className="size-chart">
+              <summary>Size chart · read across the systems</summary>
+
+              <table>
+                <thead>
+                  <tr>
+                    {systems.map((id) => (
+                      <th key={id} scope="col">{id}</th>
+                    ))}
+                    <th scope="col">Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sizes.map((option) => {
+                    const soldOut = option.left === 0;
+                    const name = sizeName(option, system);
+
+                    return (
+                      <tr
+                        key={option.us}
+                        className={`${option.us === size ? "is-selected" : ""}${
+                          soldOut ? " is-gone" : ""
+                        }`}
+                      >
+                        {systems.map((id) => (
+                          <td key={id}>{sizeValue(option, id)}</td>
+                        ))}
+                        <td>
+                          {/* The same two answers the chips give, in the
+                              same words — a row that could be tapped to
+                              watch a sold-out size would be a second place
+                              to manage alerts, and one of them would end up
+                              disagreeing with the other. */}
+                          {soldOut ? (
+                            <span className="chart-gone">Sold out</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="chart-take"
+                              onClick={() => setSize(option.us)}
+                              disabled={option.us === size}
+                              aria-label={
+                                option.us === size
+                                  ? `${name} is selected`
+                                  : `Select ${name}`
+                              }
+                            >
+                              {option.us === size ? "Selected" : "Select"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </details>
+
             {/* Folded away by default. Most people know their size, and the
                 ones who do not are the ones who go looking. */}
             <details className="fitter">

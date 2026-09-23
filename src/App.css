@@ -730,6 +730,112 @@
 /* The fitter borrows the restock panel's frame — both are the same kind of
    thing, a small aside that opens under the size row — so opening one does
    not look like arriving somewhere new. */
+/* Shares the fitter's shell: they are the same kind of thing — a panel
+   somebody opens when the row of chips has not answered their question — and
+   two boxes of different shapes stacked under the sizes would read as two
+   unrelated features. */
+.size-chart {
+  margin-top: 14px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--glass);
+}
+
+.size-chart[open] { padding-bottom: 16px; }
+
+.size-chart summary {
+  padding: 12px 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  transition: color 0.2s var(--ease);
+}
+
+.size-chart summary:hover { color: var(--text); }
+.size-chart summary::-webkit-details-marker { display: none; }
+
+.size-chart summary::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 10px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(-45deg);
+  transition: transform 0.2s var(--ease);
+}
+
+.size-chart[open] summary::before {
+  transform: translateY(-4px) rotate(45deg);
+}
+
+.size-chart table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.size-chart th {
+  padding: 6px 8px 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--faint);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.size-chart td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--muted);
+  text-align: left;
+}
+
+/* The row you are on, marked the way the chip above is: the chart is a
+   second view of the same row of sizes, not a separate list. */
+.size-chart tr.is-selected td {
+  color: var(--text);
+  background: var(--glass-strong);
+}
+
+/* Dimmed rather than dropped. A size missing from a conversion chart reads
+   as one that is not made, which is a different thing from one that has run
+   out — and the row is still the answer for anybody who came here to convert
+   rather than to buy. */
+.size-chart tr.is-gone td { opacity: 0.45; }
+
+.chart-gone {
+  color: var(--faint);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.chart-take {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.chart-take:hover { background: var(--bg-soft); border-color: var(--text); }
+
+.chart-take:disabled {
+  opacity: 0.5;
+  cursor: default;
+  background: transparent;
+}
+
 .fitter {
   margin-top: 14px;
   padding: 0 16px;
