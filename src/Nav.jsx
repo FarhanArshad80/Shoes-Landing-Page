@@ -104,6 +104,7 @@ const Nav = () => {
   const [bagCount, setBagCount] = useState(0);
   const menuBtnRef = useRef(null);
   const searchRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const trimmed = query.trim();
   const results = searchCatalogue(query);
@@ -141,6 +142,43 @@ const Nav = () => {
 
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
+
+  // "/" jumps to the search box, the way it does on most sites with one. The
+  // box sits in the top corner of a sticky header, and reaching it from
+  // halfway down the page meant a trip back up with the mouse or a long
+  // run of Tab presses through everything in between.
+  //
+  // Only when nothing is being typed: a slash in the restock email field or
+  // the foot measurer is a character, not a shortcut. And only when the box
+  // is actually on screen — below the desktop breakpoint it is hidden, and
+  // focusing an invisible input would swallow the next keystrokes.
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      const target = event.target;
+      const typing =
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
+      if (typing) return;
+
+      const input = searchInputRef.current;
+
+      if (!input || input.offsetParent === null) return;
+
+      event.preventDefault();
+      input.focus();
+      input.select();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   // A results panel that stays open after the pointer has moved on reads as
   // a stuck overlay, so a click anywhere else dismisses it.
@@ -284,7 +322,9 @@ const Nav = () => {
                 type="search"
                 placeholder="Search"
                 className="search-input"
+                ref={searchInputRef}
                 aria-label="Search products"
+                aria-keyshortcuts="/"
                 role="combobox"
                 aria-expanded={panelOpen}
                 aria-controls="search-results"
@@ -297,6 +337,13 @@ const Nav = () => {
                 onFocus={() => setSearchOpen(true)}
                 onKeyDown={handleSearchKeyDown}
               />
+
+              {/* The shortcut is no use to anybody who cannot see it exists.
+                  Shown only while the box is idle and empty — once it has
+                  focus or a term, the hint has done its job. */}
+              {!query && (
+                <kbd className="search-key" aria-hidden="true">/</kbd>
+              )}
             </label>
 
             {panelOpen && (
