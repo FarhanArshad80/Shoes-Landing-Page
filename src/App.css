@@ -640,6 +640,30 @@
   background: var(--accent-warm);
 }
 
+/* Pairs of this size already in the bag, counted on the chip itself.
+   Sold-out sizes cannot be in the bag, so this never shares a corner with
+   the watched dot. */
+.size-chip.is-bagged {
+  position: relative;
+}
+
+.size-chip-bagged {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--pill);
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+}
+
 .restock {
   margin-top: 14px;
   padding: 14px 16px;

@@ -1054,6 +1054,12 @@ const Hero = () => {
                 const soldOut = left === 0;
                 const watching = alerts.includes(us);
                 const name = sizeName(option, system);
+                // How many of this size are already in the bag. The row is
+                // where sizes are chosen and the bag is further down the
+                // page, so picking a second size used to mean scrolling down
+                // to check which one was already in there — or, more often,
+                // not checking and adding the same pair twice.
+                const bagged = bag.find((line) => line.us === us)?.qty || 0;
 
                 return (
                   <button
@@ -1062,6 +1068,8 @@ const Hero = () => {
                     className={`size-chip${us === size ? " is-selected" : ""}${
                       soldOut ? " is-gone" : ""
                     }${watching ? " is-watched" : ""}${
+                      bagged > 0 ? " is-bagged" : ""
+                    }${
                       asking === us ? " is-asking" : ""
                     }`}
                     onClick={() => (soldOut ? handleGone(us) : setSize(us))}
@@ -1071,10 +1079,17 @@ const Hero = () => {
                         ? watching
                           ? `${name} — sold out, you'll be emailed when it's back. Tap to cancel`
                           : `${name} — sold out, ask to be told when it's back`
+                        : bagged > 0
+                        ? `${name} — ${left} left, ${bagged} in your bag`
                         : `${name} — ${left} left`
                     }
                   >
                     {sizeValue(option, system)}
+                    {bagged > 0 && (
+                      <span className="size-chip-bagged" aria-hidden="true">
+                        {bagged}
+                      </span>
+                    )}
                   </button>
                 );
               })}
