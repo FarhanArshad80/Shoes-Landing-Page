@@ -201,6 +201,17 @@
   color: var(--muted);
 }
 
+/* The typed part of each result. Weight and colour rather than a
+   highlighter block, which on a dark panel reads as a selection. */
+.search-hit {
+  background: none;
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+}
+
 /* The recent list shares the result rows, so only the parts unique to it
    need styling: the heading above them and the cross that drops one. */
 .search-recent-head {

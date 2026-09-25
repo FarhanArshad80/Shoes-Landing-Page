@@ -59,6 +59,37 @@ function searchCatalogue(term) {
     .slice(0, MAX_RESULTS);
 }
 
+// The part of a name that matched, marked so the eye lands on it. A list of
+// five pairs that all start "Flyknit" or "Court Classic" reads as five copies
+// of the same line until the difference - the bit that was typed - stands
+// out. Case-insensitive to match the search itself, and every occurrence,
+// since "on" in "Onyx" and in "Recovery" is the same answer twice.
+function Highlight({ text, term }) {
+  const query = term.trim().toLowerCase();
+
+  if (!query) return text;
+
+  const lower = text.toLowerCase();
+  const parts = [];
+  let from = 0;
+  let at = lower.indexOf(query);
+
+  while (at !== -1) {
+    if (at > from) parts.push(text.slice(from, at));
+    parts.push(
+      <mark key={at} className="search-hit">
+        {text.slice(at, at + query.length)}
+      </mark>
+    );
+    from = at + query.length;
+    at = lower.indexOf(query, from);
+  }
+
+  if (from < text.length) parts.push(text.slice(from));
+
+  return parts;
+}
+
 const SearchIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
        strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -408,9 +439,12 @@ const Nav = () => {
                         onMouseEnter={() => setActiveResult(i)}
                         onClick={() => selectResult(product)}
                       >
-                        <span className="search-result-name">{product.name}</span>
+                        <span className="search-result-name">
+                          <Highlight text={product.name} term={query} />
+                        </span>
                         <span className="search-result-meta">
-                          {product.category} · {product.price}
+                          <Highlight text={product.category} term={query} /> ·{" "}
+                          {product.price}
                         </span>
                       </button>
                     </li>
