@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const Star = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -564,6 +564,7 @@ const Hero = () => {
   // Open when the shopper is changing where the alerts go, rather than asking
   // for a new one. Same form, same validation, different question.
   const [editingEmail, setEditingEmail] = useState(false);
+  const emailRef = useRef(null);
 
   const selected = sizes.find((option) => option.us === size);
   const lowStock = selected && selected.left <= LOW_STOCK_AT;
@@ -730,6 +731,17 @@ const Hero = () => {
     setEditingEmail(false);
     setEmailError("");
   };
+
+  // Tapping a sold-out size opens a form whose only question is an email
+  // address, and the next thing anybody does is click into the box. The
+  // box is focused for them instead, which also tells a screen reader the
+  // form has appeared. Only when one of these was just opened, never on
+  // load, so the page does not grab the keyboard before anybody asked.
+  useEffect(() => {
+    if (asking === null && !editingEmail) return;
+
+    emailRef.current?.focus();
+  }, [asking, editingEmail]);
 
   const rememberEmail = (address) => {
     setAlertEmail(address);
@@ -1127,6 +1139,7 @@ const Hero = () => {
                 <div className="restock-row">
                   <input
                     id="restock-email"
+                    ref={emailRef}
                     type="email"
                     autoComplete="email"
                     placeholder="you@example.com"
