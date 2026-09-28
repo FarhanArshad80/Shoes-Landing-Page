@@ -595,6 +595,17 @@ const Hero = () => {
     window.dispatchEvent(new CustomEvent("bag:count", { detail: bagCount }));
   }, [bagCount]);
 
+  // And in the tab itself. A bag left in one of a dozen open tabs is easy to
+  // lose track of, and the tab title is the only part of the page still on
+  // screen once somebody has gone off to compare prices elsewhere. The
+  // title from index.html is kept as the base, so an empty bag leaves it
+  // exactly as it was.
+  useEffect(() => {
+    const base = document.title.replace(/^\(\d+\) /, "");
+
+    document.title = bagCount > 0 ? `(${bagCount}) ${base}` : base;
+  }, [bagCount]);
+
   useEffect(() => {
     try {
       localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
