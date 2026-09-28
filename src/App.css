@@ -275,6 +275,12 @@
   color: var(--muted);
 }
 
+.search-more {
+  padding: 8px 12px 6px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
 .search-suggest {
   display: flex;
   flex-wrap: wrap;

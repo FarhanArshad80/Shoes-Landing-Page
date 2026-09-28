@@ -55,16 +55,16 @@ function storeSearches(terms) {
   }
 }
 
+// Every match, uncut. The panel shows the first few, but it needs the full
+// count to say when it is holding some back.
 function searchCatalogue(term) {
   const query = term.trim().toLowerCase();
 
   if (!query) return [];
 
-  return catalogue
-    .filter(({ name, category }) =>
-      `${name} ${category}`.toLowerCase().includes(query)
-    )
-    .slice(0, MAX_RESULTS);
+  return catalogue.filter(({ name, category }) =>
+    `${name} ${category}`.toLowerCase().includes(query)
+  );
 }
 
 // The part of a name that matched, marked so the eye lands on it. A list of
@@ -147,7 +147,9 @@ const Nav = () => {
   const searchInputRef = useRef(null);
 
   const trimmed = query.trim();
-  const results = searchCatalogue(query);
+  const matches = searchCatalogue(query);
+  const results = matches.slice(0, MAX_RESULTS);
+  const hidden = matches.length - results.length;
 
   // An empty box used to open onto nothing. It now offers what was searched
   // for before, and the arrow keys walk that list exactly as they walk the
@@ -500,31 +502,43 @@ const Nav = () => {
                     </span>
                   </li>
                 ) : (
-                  results.map((product, i) => (
-                    <li key={product.name}>
-                      <button
-                        type="button"
-                        id={`search-result-${i}`}
-                        role="option"
-                        aria-selected={i === activeResult}
-                        className={
-                          i === activeResult
-                            ? "search-result is-active"
-                            : "search-result"
-                        }
-                        onMouseEnter={() => setActiveResult(i)}
-                        onClick={() => selectResult(product)}
-                      >
-                        <span className="search-result-name">
-                          <Highlight text={product.name} term={query} />
-                        </span>
-                        <span className="search-result-meta">
-                          <Highlight text={product.category} term={query} /> ·{" "}
-                          {product.price}
-                        </span>
-                      </button>
-                    </li>
-                  ))
+                  <>
+                    {results.map((product, i) => (
+                      <li key={product.name}>
+                        <button
+                          type="button"
+                          id={`search-result-${i}`}
+                          role="option"
+                          aria-selected={i === activeResult}
+                          className={
+                            i === activeResult
+                              ? "search-result is-active"
+                              : "search-result"
+                          }
+                          onMouseEnter={() => setActiveResult(i)}
+                          onClick={() => selectResult(product)}
+                        >
+                          <span className="search-result-name">
+                            <Highlight text={product.name} term={query} />
+                          </span>
+                          <span className="search-result-meta">
+                            <Highlight text={product.category} term={query} /> ·{" "}
+                            {product.price}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+
+                    {/* The list stops at five, and a short term like "r"
+                        matches most of the shelf. Without this the cut was
+                        silent, and the sixth pair simply did not exist. */}
+                    {hidden > 0 && (
+                      <li className="search-more" role="presentation">
+                        {hidden} more {hidden === 1 ? "pair matches" : "pairs match"}{" "}
+                        — keep typing to narrow it down
+                      </li>
+                    )}
+                  </>
                 )}
               </ul>
             )}
