@@ -1366,6 +1366,22 @@ const Hero = () => {
                     : `Select ${sizeName(suggestion, system)}`}
                 </button>
               )}
+
+              {/* Measuring somebody else's foot, or measuring again, meant
+                  selecting and deleting two numbers by hand. */}
+              {(foot.trim() || otherFoot.trim()) && (
+                <button
+                  type="button"
+                  className="fitter-take fitter-clear"
+                  onClick={() => {
+                    setFoot("");
+                    setOtherFoot("");
+                  }}
+                  aria-label="Clear both foot measurements"
+                >
+                  Start again
+                </button>
+              )}
             </details>
 
             {/* Its own line rather than sharing the stock note — what is in
