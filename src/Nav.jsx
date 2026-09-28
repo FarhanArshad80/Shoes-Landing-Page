@@ -17,6 +17,10 @@ const catalogue = [
 
 const MAX_RESULTS = 5;
 
+// Every category the catalogue actually stocks, in the order it lists them.
+// Offered when a search comes up empty, so a dead end has a way out.
+const categories = [...new Set(catalogue.map(({ category }) => category))];
+
 // Where the menu toggle gives way to the full row of links. Kept in step
 // with the 900px breakpoint in App.css.
 const DESKTOP_QUERY = "(min-width: 901px)";
@@ -478,6 +482,22 @@ const Nav = () => {
                 ) : results.length === 0 ? (
                   <li className="search-empty">
                     No pairs match “{query.trim()}”
+                    {/* A misspelt name or a model we do not carry left the
+                        panel with nothing to do but backspace. The shelf is
+                        small enough to name every aisle of it instead. */}
+                    <span className="search-suggest">
+                      Try{" "}
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          type="button"
+                          className="search-suggest-btn"
+                          onClick={() => applyRecent(category)}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </span>
                   </li>
                 ) : (
                   results.map((product, i) => (
