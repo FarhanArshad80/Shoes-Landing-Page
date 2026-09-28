@@ -543,6 +543,7 @@ const Hero = () => {
   // means the same thing, and two banners that can both be on screen at once
   // would only disagree about which mistake is being offered back.
   const [undo, setUndo] = useState(null);
+  const [undoHeld, setUndoHeld] = useState(false);
   // "Copied" is a confirmation, not a state worth keeping — it clears itself
   // a moment later.
   const [copiedLink, setCopiedLink] = useState(false);
@@ -678,12 +679,24 @@ const Hero = () => {
     setUndo(null);
   };
 
+  // The countdown stands still while the banner is being pointed at or has
+  // focus. Eight seconds is plenty to glance and click, but not for somebody
+  // reading it with a screen reader or tabbing their way to the button — and
+  // having it vanish under the cursor on the way to Undo is the one outcome
+  // the banner exists to prevent. Letting go starts the full time again.
   useEffect(() => {
-    if (!undo) return;
+    if (!undo || undoHeld) return;
 
     const timer = setTimeout(() => setUndo(null), UNDO_SECONDS * 1000);
 
     return () => clearTimeout(timer);
+  }, [undo, undoHeld]);
+
+  // A banner that leaves while held — Undo was pressed — never sees the
+  // pointer leave, so the hold is dropped with it rather than carried over
+  // to the next one.
+  useEffect(() => {
+    if (!undo) setUndoHeld(false);
   }, [undo]);
 
   const askedSize = sizes.find((option) => option.us === asking);
@@ -1552,7 +1565,14 @@ const Hero = () => {
               hang this off, and a removed line leaves a bag that is about to
               be rearranged under it. Below both, it stays in one place. */}
           {undo && (
-            <p className="bag-undo" role="status">
+            <p
+              className="bag-undo"
+              role="status"
+              onMouseEnter={() => setUndoHeld(true)}
+              onMouseLeave={() => setUndoHeld(false)}
+              onFocus={() => setUndoHeld(true)}
+              onBlur={() => setUndoHeld(false)}
+            >
               {undo.text}
               <button type="button" onClick={undoRemoval}>
                 Undo
