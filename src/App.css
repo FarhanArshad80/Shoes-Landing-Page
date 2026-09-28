@@ -223,6 +223,27 @@
   color: var(--muted);
 }
 
+.search-recent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.search-recent-clear {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.search-recent-clear:hover,
+.search-recent-clear:focus-visible {
+  color: var(--text);
+}
+
 .search-recent-row {
   display: flex;
   align-items: center;

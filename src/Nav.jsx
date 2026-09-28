@@ -296,6 +296,16 @@ const Nav = () => {
     });
   };
 
+  // One at a time was the only way to empty the list, which is four clicks
+  // for somebody who simply does not want their searches on a shared
+  // computer. Focus goes back to the box, since the panel it was in closes.
+  const forgetAllSearches = () => {
+    setRecent([]);
+    storeSearches([]);
+    setActiveResult(-1);
+    searchInputRef.current?.focus();
+  };
+
   const selectResult = (product) => {
     if (!product) return;
 
@@ -421,6 +431,14 @@ const Nav = () => {
                   <>
                     <li className="search-recent-head" role="presentation">
                       Recent searches
+                      <button
+                        type="button"
+                        className="search-recent-clear"
+                        onClick={forgetAllSearches}
+                        aria-label="Clear all recent searches"
+                      >
+                        Clear
+                      </button>
                     </li>
 
                     {recent.map((term, i) => (
