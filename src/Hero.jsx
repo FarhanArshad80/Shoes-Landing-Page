@@ -112,6 +112,27 @@ function timeLeftToPack(now = new Date()) {
   return rest === 0 ? `${hours} hr` : `${hours} hr ${rest} min`;
 }
 
+// When a pair ordered now actually leaves the warehouse, in words. The size
+// note used to say "ships today" around the clock, which was only true on a
+// weekday morning — and contradicted the delivery date in the bag, which
+// already knew better.
+function shipsWhen(now = new Date()) {
+  if (packsToday(now)) return 'ships today';
+
+  const next = new Date(now);
+
+  do {
+    next.setDate(next.getDate() + 1);
+  } while (next.getDay() === 0 || next.getDay() === 6);
+
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return next.toDateString() === tomorrow.toDateString()
+    ? 'ships tomorrow'
+    : `ships ${DAY_NAMES[next.getDay()]}`;
+}
+
 // A date that many working days after dispatch. Weekends are skipped rather
 // than counted, which is what "working days" means and what nobody wants to
 // work out from a delivery promise themselves.
@@ -1133,7 +1154,7 @@ const Hero = () => {
                 ? "Runs true to size — pick yours to continue."
                 : lowStock
                 ? `Only ${selected.left} left in ${sizeName(selected, system)}.`
-                : `${sizeName(selected, system)} in stock, ships today.`}
+                : `${sizeName(selected, system)} in stock, ${shipsWhen()}.`}
             </p>
 
             {/* Every system at once, which is the one thing the row of chips
