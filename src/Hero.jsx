@@ -783,6 +783,25 @@ const Hero = () => {
     setEmailError("");
   };
 
+  // Escape backs out of the form without sending anything, the way it backs
+  // out of the search panel and the menu. Focus goes back to whatever opened
+  // the form — the sold-out chip, or the address being changed — so the
+  // keyboard is not dropped at the top of the page.
+  const closeRestock = (event) => {
+    if (event.key !== "Escape") return;
+
+    event.stopPropagation();
+
+    const opener = editingEmail
+      ? document.querySelector(".restock-address")
+      : document.querySelector(".size-chip.is-asking");
+
+    setAsking(null);
+    setEditingEmail(false);
+    setEmailError("");
+    opener?.focus();
+  };
+
   const startEditingEmail = () => {
     setAsking(null);
     setEmail(alertEmail);
@@ -1129,7 +1148,7 @@ const Hero = () => {
             </div>
 
             {(askedSize || editingEmail) && (
-              <form className="restock" onSubmit={submitAlert}>
+              <form className="restock" onSubmit={submitAlert} onKeyDown={closeRestock}>
                 <label htmlFor="restock-email">
                   {editingEmail
                     ? "Where should we send it?"
