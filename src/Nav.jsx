@@ -17,6 +17,10 @@ const catalogue = [
 
 const MAX_RESULTS = 5;
 
+// Where the menu toggle gives way to the full row of links. Kept in step
+// with the 900px breakpoint in App.css.
+const DESKTOP_QUERY = "(min-width: 901px)";
+
 // What was searched for last time. A shop gets visited more than once, and
 // the pair someone looked at on Tuesday is very often the pair they came
 // back for on Thursday - so an empty box is a question already answered.
@@ -189,6 +193,23 @@ const Nav = () => {
     document.addEventListener("pointerdown", onPointerDown);
 
     return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  // Turning a tablet or widening the window past the breakpoint hides the
+  // toggle but left the menu flagged open, so it came straight back — still
+  // open — the moment the window narrowed again. Growing past it now closes
+  // the menu, since at that width the links are already on screen.
+  useEffect(() => {
+    if (!open || typeof window.matchMedia !== "function") return;
+
+    const desktop = window.matchMedia(DESKTOP_QUERY);
+    const onChange = (event) => {
+      if (event.matches) setOpen(false);
+    };
+
+    desktop.addEventListener("change", onChange);
+
+    return () => desktop.removeEventListener("change", onChange);
   }, [open]);
 
   // "/" jumps to the search box, the way it does on most sites with one. The
