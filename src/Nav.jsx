@@ -134,6 +134,7 @@ const Nav = () => {
   // the first moments of every visit quoting pairs that had sold out.
   const [bagCount, setBagCount] = useState(0);
   const menuBtnRef = useRef(null);
+  const navRef = useRef(null);
   const searchRef = useRef(null);
   const searchInputRef = useRef(null);
 
@@ -172,6 +173,22 @@ const Nav = () => {
     window.addEventListener("keydown", onKeyDown);
 
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // The open menu covers the top of the page, and tapping the page below it
+  // is how most people expect to put it away — the same as the search panel.
+  // Anything inside the nav is left alone: the toggle has its own handler,
+  // and the links already close the menu on the way through.
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (event) => {
+      if (!navRef.current?.contains(event.target)) setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   // "/" jumps to the search box, the way it does on most sites with one. The
@@ -329,7 +346,7 @@ const Nav = () => {
 
   return (
     <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
-      <nav className="navbar">
+      <nav className="navbar" ref={navRef}>
         <a className="logo" href="#" aria-label="Home">
           <img src="/logo-mark.png" alt="Logo" />
         </a>
