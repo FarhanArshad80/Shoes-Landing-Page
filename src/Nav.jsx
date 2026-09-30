@@ -108,6 +108,15 @@ function matchSpans(text, words) {
   return merged;
 }
 
+// What a past search would find on the shelf today. The list is kept for
+// days, and a term that once turned up three pairs may now turn up none -
+// better to see that before picking it than after.
+function matchCountText(count) {
+  if (count === 0) return "No pairs now";
+
+  return `${count} ${count === 1 ? "pair" : "pairs"}`;
+}
+
 // The part of a name that matched, marked so the eye lands on it. A list of
 // five pairs that all start "Flyknit" or "Court Classic" reads as five copies
 // of the same line until the difference - the bit that was typed - stands
@@ -502,6 +511,9 @@ const Nav = () => {
                           onClick={() => applyRecent(term)}
                         >
                           <span className="search-result-name">{term}</span>
+                          <span className="search-result-meta">
+                            {matchCountText(searchCatalogue(term).length)}
+                          </span>
                         </button>
 
                         {/* Its own button rather than a handler on the row,
