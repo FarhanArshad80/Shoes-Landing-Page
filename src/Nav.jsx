@@ -55,42 +55,81 @@ function storeSearches(terms) {
   }
 }
 
+// The separate words of a search, lower-cased and without repeats. People
+// type "onyx flyknit" as readily as "flyknit onyx", and "trail gtx" means
+// the same pair as "Trailbreak GTX" - so each word is looked for on its own
+// rather than the whole term as one run of characters.
+function searchWords(term) {
+  return [...new Set(term.trim().toLowerCase().split(/\s+/).filter(Boolean))];
+}
+
 // Every match, uncut. The panel shows the first few, but it needs the full
-// count to say when it is holding some back.
+// count to say when it is holding some back. A pair matches when every word
+// typed turns up somewhere in its name or category, in any order.
 function searchCatalogue(term) {
-  const query = term.trim().toLowerCase();
+  const words = searchWords(term);
 
-  if (!query) return [];
+  if (!words.length) return [];
 
-  return catalogue.filter(({ name, category }) =>
-    `${name} ${category}`.toLowerCase().includes(query)
-  );
+  return catalogue.filter(({ name, category }) => {
+    const haystack = `${name} ${category}`.toLowerCase();
+
+    return words.every((word) => haystack.includes(word));
+  });
+}
+
+// Where each typed word falls in a piece of text, as [start, end) spans
+// with overlaps merged, so "fly" and "flyknit" typed together mark one run
+// rather than two nested ones.
+function matchSpans(text, words) {
+  const lower = text.toLowerCase();
+  const spans = [];
+
+  for (const word of words) {
+    let at = lower.indexOf(word);
+
+    while (at !== -1) {
+      spans.push([at, at + word.length]);
+      at = lower.indexOf(word, at + word.length);
+    }
+  }
+
+  spans.sort((a, b) => a[0] - b[0]);
+
+  const merged = [];
+
+  for (const [start, end] of spans) {
+    const last = merged[merged.length - 1];
+
+    if (last && start <= last[1]) last[1] = Math.max(last[1], end);
+    else merged.push([start, end]);
+  }
+
+  return merged;
 }
 
 // The part of a name that matched, marked so the eye lands on it. A list of
 // five pairs that all start "Flyknit" or "Court Classic" reads as five copies
 // of the same line until the difference - the bit that was typed - stands
-// out. Case-insensitive to match the search itself, and every occurrence,
-// since "on" in "Onyx" and in "Recovery" is the same answer twice.
+// out. Case-insensitive to match the search itself, every word of the term,
+// and every occurrence, since "on" in "Onyx" and in "Recovery" is the same
+// answer twice.
 function Highlight({ text, term }) {
-  const query = term.trim().toLowerCase();
+  const spans = matchSpans(text, searchWords(term));
 
-  if (!query) return text;
+  if (!spans.length) return text;
 
-  const lower = text.toLowerCase();
   const parts = [];
   let from = 0;
-  let at = lower.indexOf(query);
 
-  while (at !== -1) {
-    if (at > from) parts.push(text.slice(from, at));
+  for (const [start, end] of spans) {
+    if (start > from) parts.push(text.slice(from, start));
     parts.push(
-      <mark key={at} className="search-hit">
-        {text.slice(at, at + query.length)}
+      <mark key={start} className="search-hit">
+        {text.slice(start, end)}
       </mark>
     );
-    from = at + query.length;
-    at = lower.indexOf(query, from);
+    from = end;
   }
 
   if (from < text.length) parts.push(text.slice(from));
