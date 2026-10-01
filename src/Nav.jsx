@@ -63,19 +63,37 @@ function searchWords(term) {
   return [...new Set(term.trim().toLowerCase().split(/\s+/).filter(Boolean))];
 }
 
+// How many typed words begin a word of the pair, rather than turning up
+// somewhere in the middle of one. "ra" is far more likely to mean "Racer"
+// or "Racing" than the "ra" buried in "Trailbreak" or "Marathon".
+function wordStartHits(haystack, words) {
+  const starts = haystack.split(/[^a-z0-9]+/).filter(Boolean);
+
+  return words.filter((word) => starts.some((start) => start.startsWith(word)))
+    .length;
+}
+
 // Every match, uncut. The panel shows the first few, but it needs the full
 // count to say when it is holding some back. A pair matches when every word
 // typed turns up somewhere in its name or category, in any order.
+//
+// The panel stops at five, so the order decides which pairs are seen at
+// all. Pairs where the typed words start a word come first; ties keep the
+// catalogue's own order.
 function searchCatalogue(term) {
   const words = searchWords(term);
 
   if (!words.length) return [];
 
-  return catalogue.filter(({ name, category }) => {
-    const haystack = `${name} ${category}`.toLowerCase();
-
-    return words.every((word) => haystack.includes(word));
-  });
+  return catalogue
+    .map((product) => ({
+      product,
+      haystack: `${product.name} ${product.category}`.toLowerCase(),
+    }))
+    .filter(({ haystack }) => words.every((word) => haystack.includes(word)))
+    .map((entry) => ({ ...entry, hits: wordStartHits(entry.haystack, words) }))
+    .sort((a, b) => b.hits - a.hits)
+    .map(({ product }) => product);
 }
 
 // Where each typed word falls in a piece of text, as [start, end) spans
