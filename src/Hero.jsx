@@ -354,6 +354,31 @@ function recallSaved() {
   }
 }
 
+// Every saved size that is still on the shelf, added to the bag in one go.
+// Each is capped against the shelf as it stands now, counting what the bag
+// already holds of it, the same as moving them one at a time. Sold-out sizes
+// stay saved: there is nothing to move, and the list is where they wait.
+function moveSavedToBag(bag, saved) {
+  const next = bag.map((line) => ({ ...line }));
+  const kept = [];
+
+  for (const line of saved) {
+    const option = sizes.find((item) => item.us === line.us);
+
+    if (!option || option.left === 0) {
+      kept.push(line);
+      continue;
+    }
+
+    const already = next.find((entry) => entry.us === line.us);
+
+    if (already) already.qty = Math.min(already.qty + line.qty, option.left);
+    else next.push({ us: line.us, qty: Math.min(line.qty, option.left) });
+  }
+
+  return { bag: next, saved: kept };
+}
+
 // Which sold-out sizes this visitor has already asked to hear about. Kept as
 // US sizes so the list survives switching between UK, EU and CM.
 function recallAlerts() {
@@ -672,6 +697,18 @@ const Hero = () => {
 
     forgetSaved(us);
   };
+
+  // A shortlist of three sizes meant three trips to "Move to bag".
+  const moveAllToBag = () => {
+    const moved = moveSavedToBag(bag, saved);
+
+    changeBag(moved.bag);
+    setSaved(moved.saved);
+  };
+
+  const movableSaved = saved.filter(
+    (line) => sizes.find((item) => item.us === line.us)?.left > 0
+  ).length;
 
   // Emptying the bag was one click and final. The lines are kept aside for a
   // few seconds instead, so a mis-click costs a click back rather than
@@ -1629,6 +1666,18 @@ const Hero = () => {
                   Saved for later
                   <span className="saved-count">{saved.length}</span>
                 </h2>
+
+                {/* Only worth offering for more than one: a single size
+                    already has its own button on its line. */}
+                {movableSaved > 1 && (
+                  <button
+                    type="button"
+                    className="saved-move-all"
+                    onClick={moveAllToBag}
+                  >
+                    Move all to bag
+                  </button>
+                )}
               </header>
 
               <ul className="saved-lines">
