@@ -733,6 +733,17 @@ const Hero = () => {
     Math.abs(leftMeasured - rightMeasured) >= 0.1;
   const fit = fitNote(measured, suggestion);
 
+  // The fields sit outside any form, so Enter after typing a measurement did
+  // nothing and the answer still had to be reached for with the mouse. It
+  // now takes the suggested size, exactly as the Select button below does,
+  // and only when that button would be there to press.
+  const takeSuggestionOnEnter = (event) => {
+    if (event.key !== "Enter" || !suggestion || suggestion.left === 0) return;
+
+    event.preventDefault();
+    setSize(suggestion.us);
+  };
+
   // Signing up was a one-way door: once a size was being watched, tapping it
   // again only reopened a form that could not say "actually, don't".
   const dropAlert = (us) => {
@@ -1301,6 +1312,7 @@ const Hero = () => {
                     placeholder="26.5"
                     value={foot}
                     onChange={(event) => setFoot(event.target.value)}
+                    onKeyDown={takeSuggestionOnEnter}
                     aria-label="Left foot length in centimetres"
                   />
                   <span>cm left</span>
@@ -1318,6 +1330,7 @@ const Hero = () => {
                     placeholder="optional"
                     value={otherFoot}
                     onChange={(event) => setOtherFoot(event.target.value)}
+                    onKeyDown={takeSuggestionOnEnter}
                     aria-label="Right foot length in centimetres, optional"
                   />
                   <span>cm right</span>
