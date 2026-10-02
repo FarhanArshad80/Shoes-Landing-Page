@@ -337,6 +337,20 @@ const Nav = () => {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [searchOpen]);
 
+  // The pointer handler above only hears clicks, so tabbing out of the box
+  // left the panel hanging open over the page with focus somewhere else.
+  // Focus that lands outside the search now closes it. A missing target is
+  // ignored: some browsers do not focus a clicked button, and closing then
+  // would pull the result out from under the click that was choosing it.
+  const handleSearchBlur = (event) => {
+    const next = event.relatedTarget;
+
+    if (next && !searchRef.current?.contains(next)) {
+      setSearchOpen(false);
+      setActiveResult(-1);
+    }
+  };
+
   const handleSearchChange = (event) => {
     setQuery(event.target.value);
     setSearchOpen(true);
@@ -466,7 +480,7 @@ const Nav = () => {
         </ul>
 
         <div className="nav-actions">
-          <div className="search-wrap" ref={searchRef}>
+          <div className="search-wrap" ref={searchRef} onBlur={handleSearchBlur}>
             <label className="search-field">
               <SearchIcon />
               <input
