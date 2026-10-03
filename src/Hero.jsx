@@ -379,6 +379,22 @@ function moveSavedToBag(bag, saved) {
   return { bag: next, saved: kept };
 }
 
+// Every line of the bag set aside in one go, the reverse of the above. A
+// size already on the list gains the bag's quantity rather than a second
+// line, the same as saving them one at a time.
+function saveBagToSaved(bag, saved) {
+  const next = saved.map((line) => ({ ...line }));
+
+  for (const line of bag) {
+    const already = next.find((entry) => entry.us === line.us);
+
+    if (already) already.qty += line.qty;
+    else next.push({ us: line.us, qty: line.qty });
+  }
+
+  return next;
+}
+
 // Which sold-out sizes this visitor has already asked to hear about. Kept as
 // US sizes so the list survives switching between UK, EU and CM.
 function recallAlerts() {
@@ -670,6 +686,15 @@ const Hero = () => {
     // the size is on the page, one section down — and a banner saying it
     // could be undone would be describing a mistake nobody made.
     changeBag((current) => current.filter((entry) => entry.us !== us));
+  };
+
+  // Deciding to come back to the whole bag later meant pressing Save on
+  // every line. Like a single Save, nothing is lost, so no undo is offered.
+  const saveAllForLater = () => {
+    if (bag.length === 0) return;
+
+    setSaved((current) => saveBagToSaved(bag, current));
+    changeBag([]);
   };
 
   const forgetSaved = (us) => {
@@ -1537,13 +1562,25 @@ const Hero = () => {
                   Your bag
                   <span className="bag-count">{bagCount}</span>
                 </h2>
-                <button
-                  type="button"
-                  className="bag-clear"
-                  onClick={emptyBag}
-                >
-                  Empty
-                </button>
+                <span className="bag-head-actions">
+                  {/* A single line already has its own Save button. */}
+                  {bag.length > 1 && (
+                    <button
+                      type="button"
+                      className="bag-clear"
+                      onClick={saveAllForLater}
+                    >
+                      Save all
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="bag-clear"
+                    onClick={emptyBag}
+                  >
+                    Empty
+                  </button>
+                </span>
               </header>
 
               <ul className="bag-lines">

@@ -1190,6 +1190,11 @@
 
 .bag-clear:hover { color: var(--text); }
 
+.bag-head-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .bag-lines {
   list-style: none;
   margin: 0;
