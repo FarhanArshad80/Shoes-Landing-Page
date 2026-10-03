@@ -17,6 +17,17 @@ const catalogue = [
 
 const MAX_RESULTS = 5;
 
+// The pair the page below is selling, and so the only one the bag can hold.
+const FEATURED = "Flyknit Racer — Crimson";
+
+// Said beside the featured pair when it turns up in a search, so somebody
+// looking it up again can see it is already in the bag before choosing it.
+function inBagText(product, count) {
+  if (product.name !== FEATURED || !(count > 0)) return "";
+
+  return ` · ${count} in your bag`;
+}
+
 // Every category the catalogue actually stocks, in the order it lists them.
 // Offered when a search comes up empty, so a dead end has a way out.
 const categories = [...new Set(catalogue.map(({ category }) => category))];
@@ -607,6 +618,7 @@ const Nav = () => {
                           <span className="search-result-meta">
                             <Highlight text={product.category} term={query} /> ·{" "}
                             {product.price}
+                            {inBagText(product, bagCount)}
                           </span>
                         </button>
                       </li>
