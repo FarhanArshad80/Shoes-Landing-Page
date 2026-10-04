@@ -588,6 +588,7 @@ const Hero = () => {
   // "Copied" is a confirmation, not a state worth keeping — it clears itself
   // a moment later.
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedBag, setCopiedBag] = useState(false);
   const [foot, setFoot] = useState("");
   // Optional, and second. Asking for two numbers up front makes the simple
   // case look like paperwork; the field is there for the people who know
@@ -997,6 +998,32 @@ const Hero = () => {
       setCopiedLink(true);
     } catch (error) {
       window.prompt("Copy this link:", link);
+    }
+  };
+
+  useEffect(() => {
+    if (!copiedBag) return undefined;
+
+    const timer = setTimeout(() => setCopiedBag(false), 2000);
+
+    return () => clearTimeout(timer);
+  }, [copiedBag]);
+
+  // The bag as plain text, for sending to whoever is paying or checking the
+  // size. Written in the size system on screen, since that is the one the
+  // shopper has already said they read.
+  const copyBag = async () => {
+    const lines = bag.map((line) => {
+      const option = sizes.find((item) => item.us === line.us);
+      return `${sizeName(option, system)} × ${line.qty} — ${money(line.qty * PRICE)}`;
+    });
+    const text = [...lines, `Subtotal: ${money(subtotal)}`].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedBag(true);
+    } catch (error) {
+      window.prompt("Copy your bag:", text);
     }
   };
 
@@ -1563,6 +1590,14 @@ const Hero = () => {
                   <span className="bag-count">{bagCount}</span>
                 </h2>
                 <span className="bag-head-actions">
+                  <button
+                    type="button"
+                    className="bag-clear"
+                    onClick={copyBag}
+                    aria-label="Copy the bag as a list"
+                  >
+                    {copiedBag ? "Copied" : "Copy"}
+                  </button>
                   {/* A single line already has its own Save button. */}
                   {bag.length > 1 && (
                     <button
