@@ -1605,7 +1605,19 @@ const Hero = () => {
                           type="button"
                           onClick={() => setQuantity(line.us, line.qty + 1)}
                           disabled={line.qty >= option.left}
-                          aria-label={`Add one ${name}`}
+                          aria-label={
+                            line.qty >= option.left
+                              ? `No more ${name} left to add`
+                              : `Add one ${name}`
+                          }
+                          // A greyed-out plus says "no" without saying why,
+                          // and the why is the one thing worth knowing: the
+                          // bag already holds every pair the shelf has.
+                          title={
+                            line.qty >= option.left
+                              ? `That's all ${option.left} in this size`
+                              : undefined
+                          }
                         >
                           +
                         </button>
