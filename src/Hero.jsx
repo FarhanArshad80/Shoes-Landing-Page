@@ -493,6 +493,12 @@ function sizeName(option, system) {
   return `${system} ${sizeValue(option, system)}`;
 }
 
+// One size in every system at once, for whoever reads a chart in UK but is
+// shopping in US: the conversion they would otherwise look up elsewhere.
+function allSizeNames(option) {
+  return systems.map((id) => sizeName(option, id)).join(" · ");
+}
+
 // A foot shorter or longer than this is a mistyped number rather than a
 // foot — 18cm is a small child's and 34cm is past the end of the range
 // anything on this page is cut for.
@@ -1250,6 +1256,7 @@ const Hero = () => {
                     }`}
                     onClick={() => (soldOut ? handleGone(us) : setSize(us))}
                     aria-pressed={soldOut ? asking === us : us === size}
+                    title={allSizeNames(option)}
                     aria-label={
                       soldOut
                         ? watching
