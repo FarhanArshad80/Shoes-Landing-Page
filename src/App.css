@@ -1325,6 +1325,13 @@
   color: var(--muted);
 }
 
+.saved-worth {
+  margin-left: 8px;
+  color: var(--faint);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
 .saved-count {
   min-width: 20px;
   height: 20px;

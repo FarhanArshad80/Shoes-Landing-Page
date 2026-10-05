@@ -620,6 +620,10 @@ const Hero = () => {
 
   const bagCount = bag.reduce((total, line) => total + line.qty, 0);
   const subtotal = bagCount * PRICE;
+  const savedWorth = saved.reduce((total, line) => {
+    const option = sizes.find((item) => item.us === line.us);
+    return option && option.left > 0 ? total + Math.min(line.qty, option.left) * PRICE : total;
+  }, 0);
 
   // How many of the selected size are already spoken for, so the button can
   // stop offering an eleventh pair of a size with nine on the shelf.
@@ -1756,6 +1760,12 @@ const Hero = () => {
                 <h2>
                   Saved for later
                   <span className="saved-count">{saved.length}</span>
+                  {/* What moving them back would add, counting only sizes
+                      that are still on the shelf - a sold-out pair cannot
+                      be bought, so it is not part of the sum. */}
+                  {savedWorth > 0 && (
+                    <span className="saved-worth">{money(savedWorth)}</span>
+                  )}
                 </h2>
 
                 {/* Only worth offering for more than one: a single size
