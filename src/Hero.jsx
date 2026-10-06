@@ -1669,7 +1669,14 @@ const Hero = () => {
                         </button>
                       </span>
 
-                      <span className="bag-price">{money(line.qty * PRICE)}</span>
+                      {/* Two pairs at "$378" asks for a division to check;
+                          the price of one is what was shown on the page. */}
+                      <span className="bag-price">
+                        {money(line.qty * PRICE)}
+                        {line.qty > 1 && (
+                          <small className="bag-each">{money(PRICE)} each</small>
+                        )}
+                      </span>
 
                       {/* Between keeping it and losing it. Taking a size out
                           of the bag was the only way to stop it counting
