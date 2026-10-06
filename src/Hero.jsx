@@ -1027,7 +1027,13 @@ const Hero = () => {
       const option = sizes.find((item) => item.us === line.us);
       return `${sizeName(option, system)} × ${line.qty} — ${money(line.qty * PRICE)}`;
     });
-    const text = [...lines, `Subtotal: ${money(subtotal)}`].join("\n");
+    // Whoever the list goes to is asking "how much, and when will it
+    // come", so the shipping half of the bag's footer goes with it.
+    const express = subtotal >= FREE_SHIPPING_AT;
+    const shipping = express
+      ? `Free express shipping — arrives by ${deliveryText(new Date(), EXPRESS_DAYS)}`
+      : `Standard shipping — arrives by ${deliveryText(new Date(), STANDARD_DAYS)}`;
+    const text = [...lines, `Subtotal: ${money(subtotal)}`, shipping].join("\n");
 
     try {
       await navigator.clipboard.writeText(text);
