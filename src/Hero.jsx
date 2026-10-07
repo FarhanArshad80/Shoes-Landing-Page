@@ -1340,7 +1340,12 @@ const Hero = () => {
                 CM equivalents, written out rather than derived, because the
                 jumps are not even. This lays them side by side. */}
             <details className="size-chart">
-              <summary>Size chart · read across the systems</summary>
+              {/* How much of the run is left, before the table is opened:
+                  three sizes standing is a different decision from nine. */}
+              <summary>
+                Size chart · read across the systems ·{" "}
+                {sizes.filter((option) => option.left > 0).length} of {sizes.length} in stock
+              </summary>
 
               <table>
                 <thead>
