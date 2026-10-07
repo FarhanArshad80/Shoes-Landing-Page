@@ -920,6 +920,12 @@
   letter-spacing: 0.06em;
 }
 
+.chart-low {
+  margin-left: 6px;
+  color: var(--accent);
+  font-size: 0.72rem;
+}
+
 .chart-take {
   padding: 3px 10px;
   border: 1px solid var(--line);

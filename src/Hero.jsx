@@ -1394,6 +1394,12 @@ const Hero = () => {
                               {option.us === size ? "Selected" : "Select"}
                             </button>
                           )}
+                          {/* The chips warn about a low size only once it is
+                              picked; read across the chart, the warning
+                              belongs on every row it applies to. */}
+                          {!soldOut && option.left <= LOW_STOCK_AT && (
+                            <span className="chart-low">{option.left} left</span>
+                          )}
                         </td>
                       </tr>
                     );
