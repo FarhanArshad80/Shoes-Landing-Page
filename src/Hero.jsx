@@ -1328,6 +1328,10 @@ const Hero = () => {
                 : lowStock
                 ? `Only ${selected.left} left in ${sizeName(selected, system)}.`
                 : `${sizeName(selected, system)} in stock, ${shipsWhen()}.`}
+              {/* Coming back to a size already chosen, the bag is out of
+                  sight below the fold; this says Shop Now would be adding a
+                  second pair, not the first. */}
+              {selected && inBag > 0 && ` ${inBag} already in your bag.`}
             </p>
 
             {/* Every system at once, which is the one thing the row of chips
