@@ -227,6 +227,15 @@ const Nav = () => {
   const matches = searchCatalogue(query);
   const results = matches.slice(0, MAX_RESULTS);
   const hidden = matches.length - results.length;
+  // The cheapest pair among those shown, so comparing prices does not mean
+  // reading down the list. Only when it is the one cheapest; a tie or a
+  // single result has nothing to point out.
+  const priceOf = (product) => Number(product.price.replace(/[^0-9.]/g, ""));
+  const lowest = results.length > 1 ? Math.min(...results.map(priceOf)) : null;
+  const cheapest =
+    lowest !== null && results.filter((product) => priceOf(product) === lowest).length === 1
+      ? results.find((product) => priceOf(product) === lowest)
+      : null;
 
   // An empty box used to open onto nothing. It now offers what was searched
   // for before, and the arrow keys walk that list exactly as they walk the
@@ -618,6 +627,7 @@ const Nav = () => {
                           <span className="search-result-meta">
                             <Highlight text={product.category} term={query} /> ·{" "}
                             {product.price}
+                            {product === cheapest && " · lowest price"}
                             {inBagText(product, bagCount)}
                           </span>
                         </button>
