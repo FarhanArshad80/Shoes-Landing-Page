@@ -1619,7 +1619,17 @@ const Hero = () => {
               <header className="bag-head">
                 <h2>
                   Your bag
-                  <span className="bag-count">{bagCount}</span>
+                  {/* The badge counts pairs; hovering says how they split,
+                      since three pairs in one size and three in three sizes
+                      are different orders. */}
+                  <span
+                    className="bag-count"
+                    title={`${bagCount} ${bagCount === 1 ? "pair" : "pairs"} in ${
+                      bag.length
+                    } ${bag.length === 1 ? "size" : "sizes"}`}
+                  >
+                    {bagCount}
+                  </span>
                 </h2>
                 <span className="bag-head-actions">
                   <button
