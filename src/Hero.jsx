@@ -1808,7 +1808,22 @@ const Hero = () => {
               <header className="saved-head">
                 <h2>
                   Saved for later
-                  <span className="saved-count">{saved.length}</span>
+                  {/* The list keeps sold-out sizes on purpose, which means
+                      its count is not all things that can be bought. */}
+                  <span
+                    className="saved-count"
+                    title={(() => {
+                      const gone = saved.filter(
+                        (line) => sizes.find((item) => item.us === line.us)?.left === 0
+                      ).length;
+
+                      return gone > 0
+                        ? `${gone} of ${saved.length} sold out since saving`
+                        : `${saved.length} ${saved.length === 1 ? "size" : "sizes"}, all in stock`;
+                    })()}
+                  >
+                    {saved.length}
+                  </span>
                   {/* What moving them back would add, counting only sizes
                       that are still on the shelf - a sold-out pair cannot
                       be bought, so it is not part of the sum. */}
