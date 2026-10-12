@@ -795,6 +795,15 @@ const Hero = () => {
   );
   const suggestion = recommendSize(measured);
   const footTooBig = Number.isFinite(measured) && measured > MAX_FOOT_CM;
+  // A foot is 7 to 13 inches long, and a ruler held the wrong way up gives
+  // exactly that. Read as inches it is a real foot; read as centimetres it is
+  // a toddler's, so the likely slip is named instead of a flat "no".
+  const inInches =
+    Number.isFinite(measured) &&
+    measured * 2.54 >= MIN_FOOT_CM &&
+    measured * 2.54 <= MAX_FOOT_CM
+      ? (measured * 2.54).toFixed(1)
+      : null;
   // Only worth mentioning once both numbers are real. One field filled and
   // the other half-typed is not a pair of feet yet.
   // Both have to be plausible feet before they can be compared. Halfway
@@ -1463,6 +1472,8 @@ const Hero = () => {
                   ? "We'll match it to the closest size we cut."
                   : footTooBig
                   ? `We stop at ${sizes[sizes.length - 1].cm} cm — that's past our largest pair.`
+                  : !suggestion && inInches
+                  ? `That looks like inches — in centimetres it is about ${inInches}.`
                   : !suggestion
                   ? "That doesn't look like a foot measurement."
                   : suggestion.left === 0
