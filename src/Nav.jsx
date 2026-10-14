@@ -18,7 +18,7 @@ const catalogue = [
 const MAX_RESULTS = 5;
 
 // The pair the page below is selling, and so the only one the bag can hold.
-const FEATURED = "Flyknit Racer — Crimson";
+export const FEATURED = "Flyknit Racer — Crimson";
 
 // Said beside the featured pair when it turns up in a search, so somebody
 // looking it up again can see it is already in the bag before choosing it.

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { FEATURED } from "./Nav.jsx";
 
 const Star = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -1042,7 +1043,9 @@ const Hero = () => {
     const shipping = express
       ? `Free express shipping — arrives by ${deliveryText(new Date(), EXPRESS_DAYS)}`
       : `Standard shipping — arrives by ${deliveryText(new Date(), STANDARD_DAYS)}`;
-    const text = [...lines, `Subtotal: ${money(subtotal)}`, shipping].join("\n");
+    // Named first: a list of sizes and prices pasted into a message says
+    // nothing about which shoe they are for.
+    const text = [FEATURED, ...lines, `Subtotal: ${money(subtotal)}`, shipping].join("\n");
 
     try {
       await navigator.clipboard.writeText(text);
