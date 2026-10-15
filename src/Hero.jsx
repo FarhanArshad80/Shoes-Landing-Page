@@ -1278,7 +1278,9 @@ const Hero = () => {
                     }`}
                     onClick={() => (soldOut ? handleGone(us) : setSize(us))}
                     aria-pressed={soldOut ? asking === us : us === size}
-                    title={allSizeNames(option)}
+                    // The stock was only ever in the label read aloud; a
+                    // pointer resting on the chip gets the same answer.
+                    title={`${allSizeNames(option)} · ${soldOut ? "sold out" : `${left} left`}`}
                     aria-label={
                       soldOut
                         ? watching
