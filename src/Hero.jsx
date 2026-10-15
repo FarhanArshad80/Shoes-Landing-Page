@@ -1600,7 +1600,9 @@ const Hero = () => {
                   ? "Select a size first"
                   : atLimit
                   ? `That's every ${sizeName(selected, system)} we have`
-                  : undefined
+                  : // "Shop Now" names no size and no price; the press is
+                    // about to commit to both, so hovering says which.
+                    `Add one pair in ${sizeName(selected, system)} to your bag — ${money(PRICE)}`
               }
             >
               {atLimit
