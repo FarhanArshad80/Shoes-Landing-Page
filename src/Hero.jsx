@@ -1764,7 +1764,12 @@ const Hero = () => {
               </ul>
 
               <footer className="bag-foot">
-                <span className="bag-subtotal">
+                {/* One price for every pair, so the sum behind the total is
+                    a single multiplication worth showing. */}
+                <span
+                  className="bag-subtotal"
+                  title={`${bagCount} ${bagCount === 1 ? "pair" : "pairs"} × ${money(PRICE)}`}
+                >
                   Subtotal
                   <strong>{money(subtotal)}</strong>
                 </span>
