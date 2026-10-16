@@ -51,6 +51,15 @@ const sizes = [
 ];
 
 const systems = ["US", "UK", "EU", "CM"];
+
+// What each two-letter button stands for, said on hover. "CM" in particular
+// is not a system most people have shopped in before.
+const SYSTEM_NAMES = {
+  US: "US sizes",
+  UK: "UK sizes",
+  EU: "European sizes",
+  CM: "Foot length in centimetres",
+};
 const SYSTEM_KEY = "landing.size-system";
 // The size picked last time. A person has one shoe size, and the system it
 // is written in was already remembered — asking them to find the same chip
@@ -1229,6 +1238,7 @@ const Hero = () => {
                     }
                     onClick={() => chooseSystem(id)}
                     aria-pressed={id === system}
+                    title={SYSTEM_NAMES[id]}
                   >
                     {id}
                   </button>
