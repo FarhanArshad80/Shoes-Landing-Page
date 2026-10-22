@@ -1793,7 +1793,10 @@ const Hero = () => {
                     anybody buying shoes for an occasion needs. It follows the
                     subtotal, so crossing the threshold changes the day it
                     names rather than only the words. */}
-                <span className="bag-delivery">
+                <span
+                  className="bag-delivery"
+                  title={`Orders placed before ${DISPATCH_HOUR}:00 on a weekday are packed the same day`}
+                >
                   {(() => {
                     // Read as the bag renders rather than held in state and
                     // ticked down. It only has to be right at the moment
