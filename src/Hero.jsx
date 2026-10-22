@@ -1777,7 +1777,12 @@ const Hero = () => {
                   Subtotal
                   <strong>{money(subtotal)}</strong>
                 </span>
-                <span className="bag-shipping">
+                {/* "Express" is only worth chasing if it is clear what it
+                    beats. */}
+                <span
+                  className="bag-shipping"
+                  title={`Express takes ${EXPRESS_DAYS} working days, standard ${STANDARD_DAYS}`}
+                >
                   {subtotal >= FREE_SHIPPING_AT
                     ? "Free express shipping included"
                     : `${money(FREE_SHIPPING_AT - subtotal)} away from free express shipping`}
