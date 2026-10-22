@@ -1695,7 +1695,11 @@ const Hero = () => {
 
                   return (
                     <li className="bag-line" key={line.us}>
-                      <span className="bag-size">{name}</span>
+                      {/* The bag speaks one size system; hovering gives
+                          the rest, as the size chips above already do. */}
+                      <span className="bag-size" title={allSizeNames(option)}>
+                        {name}
+                      </span>
 
                       <span className="bag-qty">
                         <button
