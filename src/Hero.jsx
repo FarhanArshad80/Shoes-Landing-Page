@@ -1888,7 +1888,10 @@ const Hero = () => {
 
                   return (
                     <li className="saved-line" key={line.us}>
-                      <span className="saved-size">
+                      <span
+                        className="saved-size"
+                        title={`${allSizeNames(option)} · ${soldOut ? "sold out" : `${option.left} left`}`}
+                      >
                         {name}
                         {line.qty > 1 && (
                           <span className="saved-qty">&times;{line.qty}</span>
