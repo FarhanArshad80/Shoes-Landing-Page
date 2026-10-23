@@ -1921,6 +1921,14 @@ const Hero = () => {
                           className="saved-restore"
                           onClick={() => moveToBag(line.us)}
                           aria-label={`Move ${name} back to your bag`}
+                          // Capped at the shelf, the same way the move is.
+                          title={(() => {
+                            const already = bag.find((entry) => entry.us === line.us)?.qty || 0;
+                            const adds = Math.max(0, Math.min(already + line.qty, option.left) - already);
+                            return adds === 0
+                              ? "Your bag already holds all there are"
+                              : `Adds ${adds} ${adds === 1 ? "pair" : "pairs"} · ${money(adds * PRICE)}`;
+                          })()}
                         >
                           Move to bag
                         </button>
