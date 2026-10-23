@@ -1867,7 +1867,9 @@ const Hero = () => {
                       that are still on the shelf - a sold-out pair cannot
                       be bought, so it is not part of the sum. */}
                   {savedWorth > 0 && (
-                    <span className="saved-worth">{money(savedWorth)}</span>
+                    <span className="saved-worth" title={`${savedWorth / PRICE} ${savedWorth / PRICE === 1 ? "pair" : "pairs"} still in stock × ${money(PRICE)}`}>
+                      {money(savedWorth)}
+                    </span>
                   )}
                 </h2>
 
