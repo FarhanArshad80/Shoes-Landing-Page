@@ -1709,7 +1709,12 @@ const Hero = () => {
                         >
                           &minus;
                         </button>
-                        <span aria-live="polite">{line.qty}</span>
+                        <span
+                          aria-live="polite"
+                          title={`${line.qty} of the ${option.left} left in this size`}
+                        >
+                          {line.qty}
+                        </span>
                         <button
                           type="button"
                           onClick={() => setQuantity(line.us, line.qty + 1)}
