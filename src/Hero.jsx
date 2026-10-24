@@ -1764,6 +1764,8 @@ const Hero = () => {
                         className="bag-remove"
                         onClick={() => setQuantity(line.us, 0)}
                         aria-label={`Remove ${name} from your bag`}
+                        // What leaving it out would do to the total.
+                        title={`Takes ${money(line.qty * PRICE)} off the subtotal`}
                       >
                         &times;
                       </button>
