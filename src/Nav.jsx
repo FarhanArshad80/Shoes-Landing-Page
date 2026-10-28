@@ -680,6 +680,7 @@ const Nav = () => {
             ref={menuBtnRef}
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
+            title={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
           >
             <MenuIcon open={open} />
