@@ -542,6 +542,7 @@ const Nav = () => {
                         className="search-recent-clear"
                         onClick={forgetAllSearches}
                         aria-label="Clear all recent searches"
+                        title={`Forget all ${recent.length} recent ${recent.length === 1 ? "search" : "searches"}`}
                       >
                         Clear
                       </button>
