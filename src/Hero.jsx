@@ -186,7 +186,7 @@ function recallSystem() {
     const stored = localStorage.getItem(SYSTEM_KEY);
 
     return systems.includes(stored) ? stored : "US";
-  } catch (error) {
+  } catch {
     return "US";
   }
 }
@@ -234,7 +234,7 @@ function reconcileBag() {
     }
 
     return { lines, gone, reduced };
-  } catch (error) {
+  } catch {
     return empty;
   }
 }
@@ -257,7 +257,7 @@ function sizeFromUrl() {
     const asked = Number(new URLSearchParams(window.location.search).get(SIZE_PARAM));
 
     return sizes.some((option) => option.us === asked) ? asked : null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -273,7 +273,7 @@ function rememberSizeInUrl(us) {
     else url.searchParams.delete(SIZE_PARAM);
 
     window.history.replaceState(null, "", url.toString());
-  } catch (error) {
+  } catch {
     /* history unavailable — the page still works, the link is just plainer */
   }
 }
@@ -314,7 +314,7 @@ function readStoredBag(raw) {
     }
 
     return lines;
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -359,7 +359,7 @@ function recallSaved() {
     }
 
     return lines;
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -412,7 +412,7 @@ function recallAlerts() {
     const stored = JSON.parse(localStorage.getItem(ALERTS_KEY));
 
     return Array.isArray(stored) ? stored.map(Number).filter(Number.isFinite) : [];
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -440,7 +440,7 @@ function recallSize() {
     const option = sizes.find((item) => item.us === stored);
 
     return option && option.left > 0 ? option.us : null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -453,7 +453,7 @@ function recallEmail() {
     const stored = localStorage.getItem(EMAIL_KEY);
 
     return typeof stored === "string" && EMAIL_RE.test(stored) ? stored : "";
-  } catch (error) {
+  } catch {
     return "";
   }
 }
@@ -643,7 +643,7 @@ const Hero = () => {
   useEffect(() => {
     try {
       localStorage.setItem(BAG_KEY, JSON.stringify(bag));
-    } catch (error) {
+    } catch {
       /* storage unavailable — the bag just will not survive a reload */
     }
   }, [bag]);
@@ -671,7 +671,7 @@ const Hero = () => {
   useEffect(() => {
     try {
       localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
-    } catch (error) {
+    } catch {
       /* storage unavailable — the shortlist just will not survive a reload */
     }
   }, [saved]);
@@ -679,7 +679,7 @@ const Hero = () => {
   useEffect(() => {
     try {
       localStorage.setItem(ALERTS_KEY, JSON.stringify(alerts));
-    } catch (error) {
+    } catch {
       /* storage unavailable — the request just will not be remembered here */
     }
   }, [alerts]);
@@ -875,7 +875,7 @@ const Hero = () => {
 
     try {
       localStorage.setItem(EMAIL_KEY, address);
-    } catch (error) {
+    } catch {
       /* storage unavailable — it just has to be typed again next visit */
     }
   };
@@ -974,7 +974,7 @@ const Hero = () => {
 
     try {
       localStorage.setItem(SYSTEM_KEY, next);
-    } catch (error) {
+    } catch {
       /* storage unavailable — the choice just will not survive a reload */
     }
   };
@@ -1025,7 +1025,7 @@ const Hero = () => {
     try {
       await navigator.clipboard.writeText(link);
       setCopiedLink(true);
-    } catch (error) {
+    } catch {
       window.prompt("Copy this link:", link);
     }
   };
@@ -1059,7 +1059,7 @@ const Hero = () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedBag(true);
-    } catch (error) {
+    } catch {
       window.prompt("Copy your bag:", text);
     }
   };
@@ -1071,7 +1071,7 @@ const Hero = () => {
 
     try {
       localStorage.setItem(SIZE_KEY, String(size));
-    } catch (error) {
+    } catch {
       /* storage unavailable — the size just has to be picked again next time */
     }
   }, [size]);
@@ -1130,7 +1130,7 @@ const Hero = () => {
                         entry.qty >= 1 &&
                         sizes.some((size) => size.us === entry.us)
                     );
-                } catch (error) {
+                } catch {
                   return [];
                 }
               })();
@@ -1155,7 +1155,7 @@ const Hero = () => {
                   return Array.isArray(stored)
                     ? stored.map(Number).filter(Number.isFinite)
                     : [];
-                } catch (error) {
+                } catch {
                   return [];
                 }
               })();
