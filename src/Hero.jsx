@@ -1674,6 +1674,7 @@ const Hero = () => {
                       type="button"
                       className="bag-clear"
                       onClick={saveAllForLater}
+                      title={`Move all ${bag.length} sizes to Saved for later`}
                     >
                       Save all
                     </button>
