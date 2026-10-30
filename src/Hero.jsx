@@ -1682,6 +1682,7 @@ const Hero = () => {
                     type="button"
                     className="bag-clear"
                     onClick={emptyBag}
+                    title="Take every pair out · you can undo straight after"
                   >
                     Empty
                   </button>
