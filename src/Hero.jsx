@@ -1665,6 +1665,7 @@ const Hero = () => {
                     className="bag-clear"
                     onClick={copyBag}
                     aria-label="Copy the bag as a list"
+                    title="Copy the bag as a list"
                   >
                     {copiedBag ? "Copied" : "Copy"}
                   </button>
