@@ -1926,6 +1926,7 @@ const Hero = () => {
                               ? `Stop watching ${name}`
                               : `Email me when ${name} is back`
                           }
+                          title={watching ? "Click to stop watching" : "Get an email when this size is back"}
                         >
                           {watching ? "Watching" : "Sold out — tell me"}
                         </button>
