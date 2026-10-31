@@ -1886,6 +1886,7 @@ const Hero = () => {
                     type="button"
                     className="saved-move-all"
                     onClick={moveAllToBag}
+                    title={`Move the ${movableSaved} sizes still in stock back to your bag`}
                   >
                     Move all to bag
                   </button>
