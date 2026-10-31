@@ -1758,6 +1758,7 @@ const Hero = () => {
                         className="bag-save"
                         onClick={() => saveForLater(line.us)}
                         aria-label={`Save ${name} for later`}
+                        title={`Set it aside in Saved for later · takes ${money(line.qty * PRICE)} off the subtotal`}
                       >
                         Save
                       </button>
