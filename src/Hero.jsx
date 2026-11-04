@@ -1549,6 +1549,7 @@ const Hero = () => {
                     setOtherFoot("");
                   }}
                   aria-label="Clear both foot measurements"
+                  title="Clear both foot measurements"
                 >
                   Start again
                 </button>
