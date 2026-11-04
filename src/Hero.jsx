@@ -1841,7 +1841,7 @@ const Hero = () => {
               onBlur={() => setUndoHeld(false)}
             >
               {undo.text}
-              <button type="button" onClick={undoRemoval}>
+              <button type="button" onClick={undoRemoval} title="Put those pairs back in the bag">
                 Undo
               </button>
             </p>
