@@ -1,13 +1,46 @@
-# React + Vite
+# Flyknit Racer: Shoes Landing Page
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A product landing page for a running shoe, built with React and Vite.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Size picker in US, UK, EU and CM**, using real size charts instead of
+  a formula. It remembers your size between visits.
+- **Foot measurer**: enter the length of each foot and it suggests the
+  size that fits the longer one.
+- **Live stock**: sold-out sizes can't be bought, and low stock is called
+  out.
+- **Bag with undo**: the bag is saved between visits and reports any size
+  that sold out while you were away.
+- **Saved sizes and restock alerts**: set a size aside for later, or ask
+  for an email when a sold-out size comes back.
+- **Delivery estimate**: shows today's dispatch cut-off and the express
+  and standard delivery dates, skipping weekends.
+- **Shareable links** that carry the chosen size.
+- **Search with history** in the navigation bar. Press `/` to jump to it.
+- **Responsive layout** with a mobile menu.
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-# landing
+```bash
+git clone https://github.com/FarhanArshad80/Shoes-Landing-Page.git
+cd Shoes-Landing-Page
+npm install
+npm run dev
+```
+
+## Scripts
+
+| Command           | What it does                         |
+| ----------------- | ------------------------------------ |
+| `npm run dev`     | Start the dev server with hot reload |
+| `npm run build`   | Build for production into `dist/`    |
+| `npm run preview` | Serve the production build locally   |
+| `npm run lint`    | Run ESLint                           |
+| `npm run deploy`  | Build and publish to GitHub Pages    |
+
+## Tech stack
+
+- React
+- Vite
+- ESLint
