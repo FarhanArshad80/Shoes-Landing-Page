@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "homepage": "https://FarhanArshad80.github.io/landing",
+  "homepage": "https://FarhanArshad80.github.io/Shoes-Landing-Page",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
