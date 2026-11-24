@@ -485,7 +485,7 @@ const Nav = () => {
     <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
       <nav className="navbar" ref={navRef}>
         <a className="logo" href="#" aria-label="Home" title="Back to the top">
-          <img src="/logo-mark.png" alt="Logo" />
+          <img src="logo-mark.png" alt="" />
         </a>
 
         <ul
