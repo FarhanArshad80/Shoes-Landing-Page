@@ -22,6 +22,8 @@ A product landing page for a running shoe, built with React and Vite.
 
 ## Getting started
 
+You need Node.js 20.19+ or 22.12+ (Vite 7 does not run on Node 18). With nvm, `nvm use` picks up the version from `.nvmrc`.
+
 ```bash
 git clone https://github.com/FarhanArshad80/Shoes-Landing-Page.git
 cd Shoes-Landing-Page
