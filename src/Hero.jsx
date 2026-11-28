@@ -2007,7 +2007,7 @@ const Hero = () => {
 
           <div className="stage">
             <div className="stage-frame">
-              <img src="logo1.jpeg" alt="Red knit running shoe" />
+              <img src="logo1.jpeg" alt="Red knit running shoe" fetchPriority="high" />
             </div>
             <div className="stage-meta">
               <span className="name">Flyknit Racer — Crimson</span>
